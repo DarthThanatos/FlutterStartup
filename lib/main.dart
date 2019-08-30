@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/inherited_sample.dart';
 import 'package:flutter_app/tabular_view.dart';
 
 void main() => runApp(MyApp());
@@ -107,6 +108,15 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               },
               child: Text("Go to tabs")
+            ),
+            FlatButton(
+                onPressed: (){
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => MyTree())
+                  );
+                },
+                child: Text("Go to inherited demo")
             )
           ],
         ),
