@@ -1,40 +1,47 @@
 import 'package:chopper/chopper.dart';
-import 'package:dependencies_flutter/dependencies_flutter.dart';
 import 'package:flutter/material.dart';
-import "package:dependencies/dependencies.dart";
 import 'package:flutter_app/api/model/built_chat.dart';
 import 'package:flutter_app/api/service/chat_service.dart';
 import 'package:built_collection/built_collection.dart';
+import 'package:inject/inject.dart';
 
+@provide
 class ChatPage extends StatefulWidget {
+
+
+  final ChatService chatService;
+
+  ChatPage(this.chatService);
 
   @override
   State<StatefulWidget> createState() => ChatPageState();
 
 }
 
-class ChatPageState extends State<ChatPage> with InjectorWidgetMixin{
+class ChatPageState extends State<ChatPage>{
+
+  ChatService get chatService => widget.chatService;
+
 
   @override
-  Widget buildWithInjector(BuildContext context, Injector injector) {
-    final chatService = injector.get<ChatService>();
+  Widget build(BuildContext context) {
     return Scaffold(
-        appBar: _appBar(),
-        body: Column(
-            children: <Widget>[
-              _futureInt(chatService),
-              _futureIntList(chatService),
-              _futureChatsList(chatService),
-            ],
-          ),
+      appBar: _appBar(),
+      body: Column(
+        children: <Widget>[
+          _futureInt(chatService),
+          _futureIntList(chatService),
+          _futureChatsList(chatService),
+        ],
+      ),
     );
   }
 
   FutureBuilder<Response> _futureChatsList(ChatService chatService) =>
-    _futureChatServiceHandler<BuiltList<BuiltChat>>(chatService, chatService.getAllChats, _body);
+      _futureChatServiceHandler<BuiltList<BuiltChat>>(chatService, chatService.getAllChats, _body);
 
   FutureBuilder<Response> _futureInt(ChatService chatService) =>
-    _futureChatServiceHandler(chatService, chatService.getTestInt, _testText);
+      _futureChatServiceHandler(chatService, chatService.getTestInt, _testText);
 
   FutureBuilder<Response> _futureIntList(ChatService chatService) =>
       _futureChatServiceHandler(chatService, chatService.getTestIntList, _testText);

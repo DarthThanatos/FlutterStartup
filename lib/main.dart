@@ -1,14 +1,25 @@
-import 'package:dependencies_flutter/dependencies_flutter.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_app/chat/chat_page.dart';
-import 'package:flutter_app/di/module/chopper_module.dart';
 import 'package:flutter_app/inherited_sample.dart';
 import 'package:flutter_app/tabular_view.dart';
-import 'package:dependencies/dependencies.dart';
+import 'package:inject/inject.dart';
 
-void main() => runApp(MyApp());
+import 'chat/chat_page.dart';
+import 'di/main_app.dart';
 
+//void main() => runApp(MyApp());
+void main() async {
+  var container = await Main.create();
+  runApp(container.app);
+}
+
+@provide
 class MyApp extends StatelessWidget {
+
+  final ChatPage chatPage;
+
+  MyApp(this.chatPage);
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -26,13 +37,16 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Flutter Demo Home Page', chatPage: chatPage),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+
+  final ChatPage chatPage;
+
+  MyHomePage({Key key, this.title, this.chatPage}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -46,11 +60,15 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _MyHomePageState createState() => _MyHomePageState(chatPage: chatPage);
 }
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+
+  final ChatPage chatPage;
+
+  _MyHomePageState({this.chatPage});
 
   void _incrementCounter() {
     setState(() {
@@ -128,11 +146,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) =>
-                                InjectorWidget(
-                                    injector: Injector.fromModules(modules: [ChopperModule()]),
-                                    child: ChatPage()
-                                )
+                              builder: (_) => chatPage
                           )
                       );
                     },
