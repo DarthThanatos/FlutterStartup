@@ -6,10 +6,11 @@ import 'package:inject/inject.dart';
 
 import 'chat/chat_page.dart';
 import 'di/main_app.dart';
+import 'di/module/chopper_module.dart';
 
 //void main() => runApp(MyApp());
 void main() async {
-  var container = await Main.create();
+  var container = await Main.create(ChopperModule());
   runApp(container.app);
 }
 

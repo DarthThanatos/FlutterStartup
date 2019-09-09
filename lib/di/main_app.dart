@@ -12,9 +12,9 @@ abstract class Main{
   @provide
   MyApp get app;
 
-  static Future<Main> create() async {
+  static Future<Main> create(ChopperModule chopperModule) async {
     return await g.Main$Injector.create(
-      ChopperModule()
+      chopperModule
     );
   }
 }
