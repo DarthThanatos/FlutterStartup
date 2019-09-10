@@ -33,7 +33,6 @@ class MyInheritedWidget extends StatefulWidget {
   MyInheritedWidgetState createState() => new MyInheritedWidgetState();
 
   static MyInheritedWidgetState of(BuildContext context){
-    print("Test");
     return (context.inheritFromWidgetOfExactType(_MyInherited) as _MyInherited).data;
   }
 }

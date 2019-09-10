@@ -5,11 +5,11 @@ import 'details_presenter.dart';
 import 'details_view.dart';
 
 class DetailsScreen extends StatefulWidget{
-  
+
   final DetailsPresenter presenter;
-  
+
   DetailsScreen({Key key, @required this.presenter}): super(key: key);
-  
+
   @override
   _DetailsViewState createState() => _DetailsViewState();
 

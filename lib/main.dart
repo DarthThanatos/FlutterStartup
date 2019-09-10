@@ -1,25 +1,24 @@
 
 import 'package:flutter/material.dart';
-import 'package:flutter_app/inherited_sample.dart';
-import 'package:flutter_app/tabular_view.dart';
+import 'package:flutter_app/ui/inherited_sample/inherited_sample.dart';
+import 'package:flutter_app/ui/tabular/tabular_view.dart';
 import 'package:inject/inject.dart';
 
-import 'chat/chat_page.dart';
 import 'di/main_app.dart';
 import 'di/module/chopper_module.dart';
+import 'di/module/presenters_module.dart';
 
 //void main() => runApp(MyApp());
+
 void main() async {
-  var container = await Main.create(ChopperModule());
+  final container = await Main.create(ChopperModule(), PresentersModule());
+  MainContainer.container = container;
   runApp(container.app);
 }
 
+
 @provide
 class MyApp extends StatelessWidget {
-
-  final ChatPage chatPage;
-
-  MyApp(this.chatPage);
 
   // This widget is the root of your application.
   @override
@@ -38,16 +37,15 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page', chatPage: chatPage),
+      home: MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
+
 }
 
 class MyHomePage extends StatefulWidget {
 
-  final ChatPage chatPage;
-
-  MyHomePage({Key key, this.title, this.chatPage}) : super(key: key);
+  MyHomePage({Key key, this.title}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -61,15 +59,11 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState(chatPage: chatPage);
+  _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-
-  final ChatPage chatPage;
-
-  _MyHomePageState({this.chatPage});
 
   void _incrementCounter() {
     setState(() {
@@ -137,6 +131,15 @@ class _MyHomePageState extends State<MyHomePage> {
                     onPressed: (){
                       Navigator.push(
                           context,
+                          MaterialPageRoute(builder: (_) => MainContainer.container.fileViewer)
+                      );
+                    },
+                    child: Text("Go to file viewer")
+                ),
+                FlatButton(
+                    onPressed: (){
+                      Navigator.push(
+                          context,
                           MaterialPageRoute(builder: (_) => MyTree())
                       );
                     },
@@ -147,7 +150,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) => chatPage
+                              builder: (_) => MainContainer.container.chatPage
                           )
                       );
                     },

@@ -1,6 +1,7 @@
-import 'package:flutter_app/model/details.dart';
 
-import 'details_view.dart';
+import 'package:flutter_app/model/details.dart';
+import 'package:flutter_app/ui/tabular/details/details_view.dart';
+
 
 class DetailsPresenter{
   DetailsView view;

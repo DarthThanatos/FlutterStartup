@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/api/model/built_chat.dart';
 import 'package:flutter_app/api/service/chat_service.dart';
 import 'package:built_collection/built_collection.dart';
+import 'package:flutter_app/di/main_app.dart';
 import 'package:inject/inject.dart';
 
 @provide
 class ChatPage extends StatefulWidget {
-
 
   final ChatService chatService;
 
@@ -22,13 +22,23 @@ class ChatPageState extends State<ChatPage>{
 
   ChatService get chatService => widget.chatService;
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _appBar(),
       body: Column(
         children: <Widget>[
+          FlatButton(
+              onPressed: (){
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => MainContainer.container.fileViewer
+                    )
+                );
+              },
+              child: Text("Go to file viewer page")
+          ),
           _futureInt(chatService),
           _futureIntList(chatService),
           _futureChatsList(chatService),
@@ -46,7 +56,11 @@ class ChatPageState extends State<ChatPage>{
   FutureBuilder<Response> _futureIntList(ChatService chatService) =>
       _futureChatServiceHandler(chatService, chatService.getTestIntList, _testText);
 
-  FutureBuilder<Response> _futureChatServiceHandler<T>(ChatService chatService, Future<Response<T>> Function() getter, Widget Function(T) onLoaded) =>
+  FutureBuilder<Response> _futureChatServiceHandler<T>(
+      ChatService chatService,
+      Future<Response<T>> Function() getter,
+      Widget Function(T) onLoaded
+  ) =>
       FutureBuilder<Response>(
           future: getter(),
           builder: (BuildContext context, AsyncSnapshot<Response> snapshot) {

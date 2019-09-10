@@ -7,18 +7,31 @@ class BuiltValueConverter extends JsonConverter {
   Request convertRequest(Request request) {
     return super.convertRequest(
       request.replace(
-        body: serializers.serializeWith(
+        body: request.body != null ? serializers.serializeWith(
           serializers.serializerForType(request.body.runtimeType),
           request.body,
-        ),
+        ): null, // body is set to null value if there is a request to post a multipart file
       ),
     );
   }
   @override
-  Response<BodyType> convertResponse<BodyType, SingleItemType>(
-      Response response) {
+  Response<BodyType> convertResponse<BodyType, SingleItemType> (
+      Response response) =>
+    response.headers.values.contains("application/octet-stream")
+        ? _convertBinaryFile(response)
+        : _convertJsonResponse(response);
+
+
+  Response <BodyType> _convertBinaryFile<BodyType, SingleItemType>(Response response)  {
+    print(response.bodyBytes.length);
+    return response.replace<BodyType>(body: response.bodyBytes as dynamic);
+    // ^ do not convert to Json like in the functions below, just make the content (that is a character array) a strongly-typed String
+  }
+  
+  Response<BodyType> _convertJsonResponse<BodyType, SingleItemType>(Response response){
     // The response parameter contains raw binary JSON data by default.
     // Utilize the already written code which converts this data to a dynamic Map or a List of Maps.
+
     final Response dynamicResponse = super.convertResponse(response);
     // customBody can be either a BuiltList<SingleItemType> or just the SingleItemType (if there's no list).
     final BodyType customBody =
@@ -26,13 +39,14 @@ class BuiltValueConverter extends JsonConverter {
 
     // Return the original dynamicResponse with a no-longer-dynamic body type.
     return dynamicResponse.replace<BodyType>(body: customBody);
+
   }
 
   dynamic _convertToCustomObject<SingleItemType>(dynamic element) {
     // If the type which the response should hold is explicitly set to a dynamic Map,
     // there's nothing we can convert.
+    print(element.runtimeType);
     if (element is SingleItemType) return element;
-
     if (element is List)
       return _deserializeListOf<SingleItemType>(element);
     else

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/ui/tabular/details/details_presenter.dart';
+import 'package:flutter_app/ui/tabular/details/details_view_screen.dart';
 
-import 'details/details_presenter.dart';
-import 'details/details_view_screen.dart';
 
 class TabDemo extends StatefulWidget{
 

@@ -4,7 +4,7 @@ import 'package:flutter_app/api/model/built_chat.dart';
 part 'chat_service.chopper.dart';
 
 @ChopperApi(baseUrl: "/chat")
-abstract class ChatService extends ChopperService{
+abstract class ChatService extends ChopperService {
 
     static ChatService create([ChopperClient client]) => _$ChatService(client);
 
