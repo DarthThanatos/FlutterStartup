@@ -1,6 +1,6 @@
 import 'package:flutter_app/api/service/chat_service.dart';
-import 'package:flutter_app/chat/chat_presenter.dart';
-import 'package:flutter_app/chat/contract.dart';
+import 'package:flutter_app/ui/chat/chat_presenter.dart';
+import 'package:flutter_app/ui/chat/contract.dart';
 import 'package:flutter_app/ui/file_viewer/file_viewer_contract.dart';
 import 'package:flutter_app/ui/file_viewer/file_viewer_presenter.dart';
 import 'package:inject/inject.dart';
@@ -9,7 +9,8 @@ import 'package:inject/inject.dart';
 class PresentersModule{
 
   @provide
-  ChatPresenter chatPresenter() => ChatPresenterImpl();
+  ChatPresenter chatPresenter(ChatService chatService)
+    => ChatPresenterImpl(chatService);
 
   @provide
   FileViewerPresenter fileViewerPresenter(ChatService chatService)

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/ui/inherited_sample/inherited_sample.dart';
 import 'package:flutter_app/ui/tabular/tabular_view.dart';
+import 'package:flutter_app/ui/websocket_test/websocket_test.dart';
 import 'package:inject/inject.dart';
 
 import 'di/main_app.dart';
@@ -155,6 +156,28 @@ class _MyHomePageState extends State<MyHomePage> {
                       );
                     },
                     child: Text("Go to chat page")
+                ),
+                FlatButton(
+                    onPressed: (){
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => MainContainer.container.testPage
+                          )
+                      );
+                    },
+                    child: Text("Go to test page")
+                ),
+                FlatButton(
+                    onPressed: (){
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => WebsocketTest()
+                          )
+                      );
+                    },
+                    child: Text("Go to websocket test page")
                 )
               ],
             ),

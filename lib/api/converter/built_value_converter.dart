@@ -15,23 +15,21 @@ class BuiltValueConverter extends JsonConverter {
     );
   }
   @override
-  Response<BodyType> convertResponse<BodyType, SingleItemType> (
-      Response response) =>
+  Response<BodyType> convertResponse<BodyType, SingleItemType> (Response response) =>
     response.headers.values.contains("application/octet-stream")
-        ? _convertBinaryFile(response)
-        : _convertJsonResponse(response);
+        ? _convertBinaryFile<BodyType, SingleItemType>(response)
+        : _convertJsonResponse<BodyType, SingleItemType>(response);
+
 
 
   Response <BodyType> _convertBinaryFile<BodyType, SingleItemType>(Response response)  {
-    print(response.bodyBytes.length);
-    return response.replace<BodyType>(body: response.bodyBytes as dynamic);
+    return response.replace<BodyType>(body: response.bodyBytes as BodyType);
     // ^ do not convert to Json like in the functions below, just make the content (that is a character array) a strongly-typed String
   }
   
   Response<BodyType> _convertJsonResponse<BodyType, SingleItemType>(Response response){
     // The response parameter contains raw binary JSON data by default.
     // Utilize the already written code which converts this data to a dynamic Map or a List of Maps.
-
     final Response dynamicResponse = super.convertResponse(response);
     // customBody can be either a BuiltList<SingleItemType> or just the SingleItemType (if there's no list).
     final BodyType customBody =
@@ -45,7 +43,6 @@ class BuiltValueConverter extends JsonConverter {
   dynamic _convertToCustomObject<SingleItemType>(dynamic element) {
     // If the type which the response should hold is explicitly set to a dynamic Map,
     // there's nothing we can convert.
-    print(element.runtimeType);
     if (element is SingleItemType) return element;
     if (element is List)
       return _deserializeListOf<SingleItemType>(element);

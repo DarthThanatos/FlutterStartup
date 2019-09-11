@@ -7,18 +7,18 @@ import 'package:flutter_app/di/main_app.dart';
 import 'package:inject/inject.dart';
 
 @provide
-class ChatPage extends StatefulWidget {
+class TestPage extends StatefulWidget {
 
   final ChatService chatService;
 
-  ChatPage(this.chatService);
+  TestPage(this.chatService);
 
   @override
-  State<StatefulWidget> createState() => ChatPageState();
+  State<StatefulWidget> createState() => TestPageState();
 
 }
 
-class ChatPageState extends State<ChatPage>{
+class TestPageState extends State<TestPage>{
 
   ChatService get chatService => widget.chatService;
 
@@ -39,8 +39,8 @@ class ChatPageState extends State<ChatPage>{
               },
               child: Text("Go to file viewer page")
           ),
-          _futureInt(chatService),
           _futureIntList(chatService),
+          _futureInt(chatService),
           _futureChatsList(chatService),
         ],
       ),
@@ -60,7 +60,7 @@ class ChatPageState extends State<ChatPage>{
       ChatService chatService,
       Future<Response<T>> Function() getter,
       Widget Function(T) onLoaded
-  ) =>
+      ) =>
       FutureBuilder<Response>(
           future: getter(),
           builder: (BuildContext context, AsyncSnapshot<Response> snapshot) {

@@ -58,7 +58,7 @@ class TabDemoState extends State<TabDemo> with SingleTickerProviderStateMixin {
               controller: _tabController,
                 children: [
                   new Text("This is call Tab View"),
-                  new Text("This is chat Tab View"),
+                  new Text("This is ui.chat Tab View"),
                   new Text("This is notification Tab View"),
                 ])
             )

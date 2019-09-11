@@ -14,6 +14,9 @@ abstract class ChatService extends ChopperService {
     @Get()
     Future<Response<BuiltList<BuiltChat>>> getAllChats();
 
+    @Get(path: "/{chatId}")
+    Future<Response<BuiltChat>> getChat(@Path("chatId") int chatId);
+
     @Get(path: "int")
     Future<Response<int>> getTestInt();
 
