@@ -45,7 +45,9 @@ class ChatPresenterImpl implements ChatPresenter{
   BuiltList<BuiltChatItem> _flattenChatsRec(BuiltList<BuiltChatItem> currentChats){
     if (currentChats == null) return BuiltList.from([]);
     final res = [];
-    res.addAll(_flattenChatsRec(currentChats));
+    res.addAll(currentChats);
+    final flattenChildren = currentChats.map((child) => _flattenChatsRec(child.children));
+    flattenChildren.forEach((childList) => res.addAll(childList));
     return BuiltList.from(res);
   }
 

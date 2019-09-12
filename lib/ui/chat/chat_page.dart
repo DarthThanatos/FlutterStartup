@@ -35,25 +35,55 @@ class ChatPageState extends State<ChatPage> implements ChatView{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _appBar(),
-      body: chat == null ? _LoadingMessage() : Column(
-        children: <Widget>[
-          _rootQuestionSection(),
-          SizedBox(height: 10),
-          _commentsSummary(),
-          SizedBox(height: 10)
-        ],
-      ),
+      body:
+        chat == null ? _LoadingMessage() :
+            ListView(
+              shrinkWrap: true,
+              children:
+                  [
+                    _rootQuestionSection(),
+                    SizedBox(height: 10),
+                    _commentsSummary(),
+                    _nestedCommentListView()
+                  ]
+          ),
+
     );
   }
 
-  Widget _commentsSection() {
+
+  List<Widget> _commentsSection(){
     final flattenedComments = widget.presenter.flattenChats(chat);
-    ListView.builder(
-      itemBuilder: (BuildContext context, int index) {
-        return CommentItemPage(chatItem: flattenedComments[index]);
-      },
-    );
+    final List<Widget> res = [];
+    flattenedComments.forEach((c) => res.addAll(CommentItemPage.getViews(c)));
+    return res;
   }
+
+  Widget _nestedCommentListView() =>
+    Container(
+      height: 400,
+      child: NestedScrollView(
+        headerSliverBuilder: (BuildContext context, bool b){
+          return [
+            SliverAppBar(
+              backgroundColor: Colors.transparent,
+              centerTitle: false,
+              leading: Container(width: 10),
+//              title: _commentsSummary(),
+              pinned: false,
+              flexibleSpace:
+                FlexibleSpaceBar()
+            )
+          ];
+        },
+        body: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: ListView(
+            children: _commentsSection()
+          ),
+        ),
+      )
+    );
   
   Widget _commentsSummary() =>
     Row(
@@ -66,11 +96,12 @@ class ChatPageState extends State<ChatPage> implements ChatView{
     );
 
   Widget _commentIcon() =>
-    Icon(Icons.mode_comment);
+    Icon(Icons.mode_comment, color: Colors.black,);
 
   Widget _commentsAmount() =>
     Text(
-      "${chat.commentsAmount} komentarz(y)"
+      "${chat.commentsAmount} komentarz(y)",
+      style: TextStyle(color: Colors.black, fontSize: 15),
     );
 
   Widget _appBar() =>
@@ -92,9 +123,9 @@ class ChatPageState extends State<ChatPage> implements ChatView{
   Widget _rootQuestionSection() =>
       Container(
         height: 400.0,
-        child: ListView(
+        child: Column(
           children: <Widget>[
-            _chat_root_header(),
+            _chatRootHeader(),
             _rootComment(),
             _maybeImgSection(),
           ],
@@ -106,7 +137,7 @@ class ChatPageState extends State<ChatPage> implements ChatView{
     return fileInfo == null ? Container() : ImageSection(fileInfo: fileInfo);
   }
 
-  Widget _chat_root_header() =>
+  Widget _chatRootHeader() =>
     Container(
       height: 35,
       color: Color(0x0F000000),
