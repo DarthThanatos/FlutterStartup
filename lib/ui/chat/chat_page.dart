@@ -35,22 +35,73 @@ class ChatPageState extends State<ChatPage> implements ChatView{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _appBar(),
+      bottomSheet: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Divider(),
+          _addCommentSection(),
+        ],
+      ),
       body:
         chat == null ? _LoadingMessage() :
-            ListView(
-              shrinkWrap: true,
-              children:
-                  [
-                    _rootQuestionSection(),
-                    SizedBox(height: 10),
-                    _commentsSummary(),
-                    _nestedCommentListView()
-                  ]
+          ListView(
+            shrinkWrap: true,
+            children:
+                [
+                  _rootQuestionSection(),
+  //                    SizedBox(height: 10),
+  //                    _commentsSummary(),
+                  _nestedCommentListView()
+                ]
           ),
-
     );
   }
 
+  Widget _addCommentSection() =>
+    Row(
+      children: <Widget>[
+        _commentInput(),
+        _addImageBtn(),
+        _addCommentBtn()
+      ],
+    );
+
+  Widget _addImageBtn() =>
+    _iconizedButton(Icons.image, _onAddImage);
+
+  Widget _addCommentBtn() =>
+    _iconizedButton(Icons.send, _onAddComment);
+
+  void _onAddImage(){
+    print("Adding image");
+  }
+
+  void _onAddComment(){
+    print("Adding comment");
+  }
+
+  Widget _iconizedButton(IconData icon, void Function() onPressed) =>
+      FlatButton.icon(
+          icon: Icon(icon), //`Icon` to display
+          label: Text(
+            "",
+            style: TextStyle(fontSize: 15),
+          ), //`Text` to display
+          onPressed: onPressed
+      );
+
+  Widget _commentInput() =>
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          width: 150,
+          child: TextFormField(
+            decoration: InputDecoration(
+                labelText: 'Napisz komentarz'
+            ),
+          ),
+        ),
+      );
 
   List<Widget> _commentsSection(){
     final flattenedComments = widget.presenter.flattenChats(chat);
@@ -68,9 +119,13 @@ class ChatPageState extends State<ChatPage> implements ChatView{
             SliverAppBar(
               backgroundColor: Colors.transparent,
               centerTitle: false,
-              leading: Container(width: 10),
-//              title: _commentsSummary(),
+              title: MediaQuery.removePadding(
+                removeLeft: true,
+                child: _commentsSummary(),
+                context: context,
+              ),
               pinned: false,
+              automaticallyImplyLeading: false,
               flexibleSpace:
                 FlexibleSpaceBar()
             )
@@ -87,8 +142,9 @@ class ChatPageState extends State<ChatPage> implements ChatView{
   
   Widget _commentsSummary() =>
     Row(
+      mainAxisAlignment: MainAxisAlignment.start,
       children: <Widget>[
-        SizedBox(width: 10),
+//        SizedBox(width: 10),
         _commentIcon(),
         SizedBox(width: 10),
         _commentsAmount()
