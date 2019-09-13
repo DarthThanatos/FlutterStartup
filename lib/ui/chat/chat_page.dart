@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/api/model/built_chat.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:flutter_app/ui/chat/comment_input.dart';
+import 'package:flutter_app/ui/chat/root_comment_button_section.dart';
 import 'package:flutter_app/util/list-util.dart';
 import 'package:inject/inject.dart';
 
-import 'ImageSection.dart';
+import 'image_section.dart';
 import 'comment_item.dart';
 import 'contract.dart';
 
@@ -26,35 +27,63 @@ class ChatPageState extends State<ChatPage> implements ChatView{
 
   BuiltChat chat;
 
+  ScrollController _scrollController;
+  ScrollController _nestedScrollController;
+
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
+    _nestedScrollController = ScrollController();
     widget.presenter.attachView(this);
     widget.presenter.downloadChat(666);
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _appBar(),
-      bottomSheet:
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Divider(),
-            CommentInput(),
-          ],
-        ),
-      body:
-        chat == null ? _LoadingMessage() :
-          ListView(
-            shrinkWrap: true,
-            children:
-                ListUtil.mergedList(_rootQuestionSection(), [_nestedCommentListView()])
-          ),
-    );
+  void dispose() {
+    _scrollController.dispose();
+    _nestedScrollController.dispose();
+    widget.presenter.detachView();
+    super.dispose();
   }
 
+  // to prevent invoking build() on tapping the text field
+  // https://github.com/flutter/flutter/issues/36271
+  var _bottomSheetWidget = BottomSheetWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    return
+      chat == null
+          ? _LoadingMessage()
+          : Scaffold(
+            appBar: _appBar(),
+            bottomSheet:
+              _bottomSheetWidget,
+            body:
+                ListView(
+                  controller: _scrollController,
+                  shrinkWrap: true,
+                  children:
+                      ListUtil.mergedList(_rootQuestionSection(), [_nestedCommentListView()])
+                ),
+            floatingActionButton: FloatingActionButton(
+              onPressed: _scrollToTop,
+              tooltip: 'scroll top',
+              child: Icon(Icons.keyboard_arrow_up),
+            )
+          );
+  }
+
+  void _scrollToTop(){
+    _scrollToTopHaving(_scrollController);
+    _scrollToTopHaving(_nestedScrollController);
+  }
+
+  void _scrollToTopHaving(ScrollController ctrl) {
+    ctrl.animateTo(_scrollController.position.minScrollExtent,
+        duration: Duration(milliseconds: 500), curve: Curves.easeIn);
+  }
 
   List<Widget> _commentsSection(){
     final flattenedComments = widget.presenter.flattenChats(chat);
@@ -68,6 +97,7 @@ class ChatPageState extends State<ChatPage> implements ChatView{
         Container(
             height: 400,
             child: NestedScrollView(
+              controller: _nestedScrollController,
               headerSliverBuilder: (BuildContext context, bool b){
                 return [
                   SliverAppBar(
@@ -130,11 +160,14 @@ class ChatPageState extends State<ChatPage> implements ChatView{
         ],
       );
 
-  List<Widget> _rootQuestionSection() => [
-            _chatRootHeader(),
-            _rootComment(),
-            _maybeImgSection(),
-          ];
+  List<Widget> _rootQuestionSection() =>
+    [
+      _chatRootHeader(),
+      _rootComment(),
+      _maybeImgSection(),
+      SizedBox(height: 25),
+      RootCommentButtonSection()
+    ];
 
   Widget _maybeImgSection() {
     final fileInfo = chat.chatRoot.fileInfo;
@@ -191,12 +224,13 @@ class ChatPageState extends State<ChatPage> implements ChatView{
   Widget _rootComment() =>
      Padding(
        padding: const EdgeInsets.all(12.0),
-       child: Text(
-         chat.chatRoot.text,
-         style: TextStyle(
-           fontSize: 22
-         )
-       ),
+       child:
+        Text(
+           chat.chatRoot.text,
+           style: TextStyle(
+             fontSize: 22
+           )
+         ),
      );
 
   @override
@@ -241,34 +275,23 @@ class _LoadingMessage extends StatelessWidget {
   Widget build(BuildContext context) {
     return _Centered(
       top: CircularProgressIndicator(),
-      bottom: Text('Loading...'),
+      bottom: Text('Loading...', style: TextStyle(decoration: TextDecoration.none)),
     );
   }
 
 }
 
-class _EmptyMessage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return _Centered(
-        top: Icon(Icons.info),
-        bottom: Text("No posts to show.")
-    );
-  }
 
-}
-
-class _ErrorMessage extends StatelessWidget {
-  final String error;
-
-  _ErrorMessage({@required this.error});
+class BottomSheetWidget extends StatelessWidget{
 
   @override
-  Widget build(BuildContext context) {
-    return _Centered(
-        top: Icon(Icons.error),
-        bottom: Text('There was an error: $error')
+  Widget build(BuildContext context)=>
+    Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Divider(),
+        CommentInput(),
+      ],
     );
-  }
 
 }

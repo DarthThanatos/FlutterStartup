@@ -10,13 +10,11 @@ class CommentInput extends StatefulWidget {
 
 class CommentInputState extends State<CommentInput> {
 
-  static GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context){
     return Container(
-      height: 50,
-      child: Row(
+      child:
+      Row(
         children: <Widget>[
           _commentEditText(),
           _addImageBtn(),
@@ -27,17 +25,18 @@ class CommentInputState extends State<CommentInput> {
   }
 
   Widget _commentEditText() =>
-      Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Container(
-          width: 150,
-          child: TextFormField(
-            key: _formKey,
-            decoration: InputDecoration(
-                labelText: 'Napisz komentarz'
-            ),
+      Container(
+        width: 250,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+            child:
+              TextFormField(
+                maxLines: null,
+                decoration: InputDecoration(
+                    labelText: 'Napisz komentarz'
+                ),
+              ),
           ),
-        ),
       );
 
   Widget _addImageBtn() =>

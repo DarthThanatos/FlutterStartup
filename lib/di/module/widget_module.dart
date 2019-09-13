@@ -1,4 +1,3 @@
-import 'package:flutter_app/api/service/chat_service.dart';
 import 'package:flutter_app/api/service/file_service.dart';
 import 'package:flutter_app/ui/chat/chat_page.dart';
 import 'package:flutter_app/ui/chat/contract.dart';

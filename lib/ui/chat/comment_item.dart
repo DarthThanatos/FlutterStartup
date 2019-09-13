@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/api/model/built_chat_item.dart';
+import 'package:flutter_app/util/date-util.dart';
 
-const COMMENT_ITEM_PAGE_HEIGHT = 250.0;
+import 'image_section.dart';
 
 class CommentItemPage {
 
@@ -14,6 +15,7 @@ class CommentItemPage {
       SizedBox(height: 10),
       _commentText(),
       SizedBox(height: 10),
+      _maybeImgSection(),
       _commentBottomRow(),
       Divider()
     ];
@@ -92,7 +94,7 @@ class CommentItemPage {
           mainAxisAlignment: MainAxisAlignment.end,
           children: <Widget>[
             Text(
-              "16 min",
+              DateUtils.getPrettyTimeDifferenceFromStringDate(chatItem.creationTime),
               style: TextStyle(fontSize: 15),
             ),
           ],
@@ -109,4 +111,8 @@ class CommentItemPage {
         onPressed: onPressed
       );
 
+  static Widget _maybeImgSection() {
+    final fileInfo = chatItem.fileInfo;
+    return fileInfo == null ? Container() : ImageSection(fileInfo: fileInfo);
+  }
 }
