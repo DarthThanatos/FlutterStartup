@@ -19,28 +19,13 @@ class CommentItemPage {
     ];
   }
 
-  Widget _body() =>
-      Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          _authorRow(),
-          SizedBox(height: 10),
-          _commentText(),
-          SizedBox(height: 10),
-          _commentBottomRow(),
-          Expanded(
-              child: Divider()
-          ),
-        ],
-      );
-
-
   static Widget _authorRow() =>
     Row(
       children: <Widget>[
         _authorImg(),
         SizedBox(width: 10),
-        _authorName()
+        _authorName(),
+        _time()
       ],
     );
 
@@ -72,7 +57,6 @@ class CommentItemPage {
   static Widget _commentBottomRow() =>
       Row(
         children: <Widget>[
-          _time(),
           SizedBox(width: 10),
           _iconizedButton(Icons.undo, "Odpowiedź", _onAnswer),
           SizedBox(width: 10),
@@ -83,7 +67,10 @@ class CommentItemPage {
 
   static Widget _expandedLike() =>
       Expanded(
-        child: _iconizedButton(Icons.thumb_up, "", _onLike),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [_iconizedButton(Icons.thumb_up, "", _onLike)],
+        ),
       );
 
   static void _onAnswer(){
@@ -100,9 +87,16 @@ class CommentItemPage {
   }
 
   static Widget _time() =>
-      Text(
-        "16 min",
-        style: TextStyle(fontSize: 15),
+      Expanded(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            Text(
+              "16 min",
+              style: TextStyle(fontSize: 15),
+            ),
+          ],
+        ),
       );
 
   static Widget _iconizedButton(IconData icon, String text, void Function() onPressed) =>

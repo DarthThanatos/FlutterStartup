@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/api/model/built_chat.dart';
 import 'package:built_collection/built_collection.dart';
+import 'package:flutter_app/ui/chat/comment_input.dart';
+import 'package:flutter_app/util/list-util.dart';
 import 'package:inject/inject.dart';
 
 import 'ImageSection.dart';
@@ -35,116 +37,68 @@ class ChatPageState extends State<ChatPage> implements ChatView{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _appBar(),
-      bottomSheet: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Divider(),
-          _addCommentSection(),
-        ],
-      ),
+      bottomSheet:
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Divider(),
+            CommentInput(),
+          ],
+        ),
       body:
         chat == null ? _LoadingMessage() :
           ListView(
             shrinkWrap: true,
             children:
-                [
-                  _rootQuestionSection(),
-  //                    SizedBox(height: 10),
-  //                    _commentsSummary(),
-                  _nestedCommentListView()
-                ]
+                ListUtil.mergedList(_rootQuestionSection(), [_nestedCommentListView()])
           ),
     );
   }
 
-  Widget _addCommentSection() =>
-    Row(
-      children: <Widget>[
-        _commentInput(),
-        _addImageBtn(),
-        _addCommentBtn()
-      ],
-    );
-
-  Widget _addImageBtn() =>
-    _iconizedButton(Icons.image, _onAddImage);
-
-  Widget _addCommentBtn() =>
-    _iconizedButton(Icons.send, _onAddComment);
-
-  void _onAddImage(){
-    print("Adding image");
-  }
-
-  void _onAddComment(){
-    print("Adding comment");
-  }
-
-  Widget _iconizedButton(IconData icon, void Function() onPressed) =>
-      FlatButton.icon(
-          icon: Icon(icon), //`Icon` to display
-          label: Text(
-            "",
-            style: TextStyle(fontSize: 15),
-          ), //`Text` to display
-          onPressed: onPressed
-      );
-
-  Widget _commentInput() =>
-      Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Container(
-          width: 150,
-          child: TextFormField(
-            decoration: InputDecoration(
-                labelText: 'Napisz komentarz'
-            ),
-          ),
-        ),
-      );
 
   List<Widget> _commentsSection(){
     final flattenedComments = widget.presenter.flattenChats(chat);
     final List<Widget> res = [];
     flattenedComments.forEach((c) => res.addAll(CommentItemPage.getViews(c)));
+    res.add(Container(height: 100));
     return res;
   }
 
   Widget _nestedCommentListView() =>
-    Container(
-      height: 400,
-      child: NestedScrollView(
-        headerSliverBuilder: (BuildContext context, bool b){
-          return [
-            SliverAppBar(
-              backgroundColor: Colors.transparent,
-              centerTitle: false,
-              title: MediaQuery.removePadding(
-                removeLeft: true,
-                child: _commentsSummary(),
-                context: context,
+        Container(
+            height: 400,
+            child: NestedScrollView(
+              headerSliverBuilder: (BuildContext context, bool b){
+                return [
+                  SliverAppBar(
+                      backgroundColor: Colors.transparent,
+                      centerTitle: false,
+                      title: MediaQuery.removePadding(
+                        removeLeft: true,
+                        child: _commentsSummary(),
+                        context: context,
+                      ),
+                      pinned: false,
+                      automaticallyImplyLeading: false,
+                      flexibleSpace:
+                        FlexibleSpaceBar()
+                  )
+                ];
+              },
+              body: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ListView(
+                    children: _commentsSection()
+                ),
               ),
-              pinned: false,
-              automaticallyImplyLeading: false,
-              flexibleSpace:
-                FlexibleSpaceBar()
             )
-          ];
-        },
-        body: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: ListView(
-            children: _commentsSection()
-          ),
-        ),
-      )
-    );
+        );
+
   
   Widget _commentsSummary() =>
     Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: <Widget>[
-//        SizedBox(width: 10),
         _commentIcon(),
         SizedBox(width: 10),
         _commentsAmount()
@@ -176,17 +130,11 @@ class ChatPageState extends State<ChatPage> implements ChatView{
         ],
       );
 
-  Widget _rootQuestionSection() =>
-      Container(
-        height: 400.0,
-        child: Column(
-          children: <Widget>[
+  List<Widget> _rootQuestionSection() => [
             _chatRootHeader(),
             _rootComment(),
             _maybeImgSection(),
-          ],
-        )
-      );
+          ];
 
   Widget _maybeImgSection() {
     final fileInfo = chat.chatRoot.fileInfo;
