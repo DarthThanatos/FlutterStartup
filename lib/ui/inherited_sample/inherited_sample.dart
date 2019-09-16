@@ -73,7 +73,7 @@ class _MyTreeState extends State<MyTree> {
         appBar: new AppBar(
           title: new Text('Title'),
         ),
-        body: new Column(
+        body: new ListView(
           children: <Widget>[
             new WidgetA(),
             new Container(
@@ -82,14 +82,36 @@ class _MyTreeState extends State<MyTree> {
                   new Icon(Icons.shopping_cart),
                   new WidgetB(),
                   new WidgetC(),
-                ],
+                ]
               ),
             ),
+//            ListView.builder(
+//                physics: NeverScrollableScrollPhysics(),
+//                itemCount: 100,
+//                shrinkWrap: true,
+//                itemBuilder: (BuildContext context, int index) => ColumnWidget()
+//                ),
+            ListView(
+                physics: NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                children: [ColumnWidget(), Column()]
+            ),
+            ListView(shrinkWrap: true,)
           ],
         ),
       ),
     );
   }
+}
+
+class ColumnWidget extends StatelessWidget{
+  @override
+  Widget build(BuildContext context) =>
+    Column(children: <Widget>[
+      Text("first"),
+      Text("second")
+    ],);
+
 }
 
 class WidgetA extends StatelessWidget {

@@ -4,24 +4,25 @@ import 'package:flutter_app/util/date-util.dart';
 
 import 'image_section.dart';
 
-class CommentItemPage {
+class CommentItemPage extends StatelessWidget{
 
-  static BuiltChatItem chatItem;
+  final BuiltChatItem chatItem;
 
-  static List<Widget> getViews(BuiltChatItem chatItem) {
-    CommentItemPage.chatItem = chatItem;
-    return [
+  CommentItemPage({Key key, @required this.chatItem}): super(key: key);
+
+  @override
+  Widget build(BuildContext context) =>
+    Column(children: <Widget>[
       _authorRow(),
       SizedBox(height: 10),
       _commentText(),
       SizedBox(height: 10),
       _maybeImgSection(),
       _commentBottomRow(),
-      Divider()
-    ];
-  }
+      Divider()]
+    );
 
-  static Widget _authorRow() =>
+  Widget _authorRow() =>
     Row(
       children: <Widget>[
         _authorImg(),
@@ -31,7 +32,7 @@ class CommentItemPage {
       ],
     );
 
-  static Widget _authorImg() =>
+  Widget _authorImg() =>
       Container(
         width: 20,
         height: 20,
@@ -44,19 +45,19 @@ class CommentItemPage {
         ),
       );
 
-  static Widget _authorName() =>
+  Widget _authorName() =>
       Text(
         chatItem.user.userName,
         style: TextStyle(fontSize: 16)
       );
 
-  static Widget _commentText() =>
+  Widget _commentText() =>
       Text(
         chatItem.text,
         style: TextStyle(fontSize: 22),
       );
 
-  static Widget _commentBottomRow() =>
+  Widget _commentBottomRow() =>
       Row(
         children: <Widget>[
           SizedBox(width: 10),
@@ -67,7 +68,7 @@ class CommentItemPage {
         ],
       );
 
-  static Widget _expandedLike() =>
+  Widget _expandedLike() =>
       Expanded(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -75,20 +76,20 @@ class CommentItemPage {
         ),
       );
 
-  static void _onAnswer(){
+  void _onAnswer(){
     print("Answering on comment with id: ${chatItem.chatItemId}");
   }
   
-  static void _onReport(){
+  void _onReport(){
     print("Reporting comment with id: ${chatItem.chatItemId}");
   }
 
-  static void _onLike(){
+  void _onLike(){
     print("Liking comment with id: ${chatItem.chatItemId}");
 
   }
 
-  static Widget _time() =>
+  Widget _time() =>
       Expanded(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -101,7 +102,7 @@ class CommentItemPage {
         ),
       );
 
-  static Widget _iconizedButton(IconData icon, String text, void Function() onPressed) =>
+  Widget _iconizedButton(IconData icon, String text, void Function() onPressed) =>
       FlatButton.icon(
         icon: Icon(icon), //`Icon` to display
         label: Text(
@@ -111,8 +112,9 @@ class CommentItemPage {
         onPressed: onPressed
       );
 
-  static Widget _maybeImgSection() {
+  Widget _maybeImgSection() {
     final fileInfo = chatItem.fileInfo;
     return fileInfo == null ? Container() : ImageSection(fileInfo: fileInfo);
   }
+
 }

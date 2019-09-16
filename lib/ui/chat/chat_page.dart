@@ -63,9 +63,11 @@ class ChatPageState extends State<ChatPage> implements ChatView{
             body:
                 ListView(
                   controller: _scrollController,
-                  shrinkWrap: true,
-                  children:
-                      ListUtil.mergedList(_rootQuestionSection(), [_nestedCommentListView()])
+//                  shrinkWrap: true,
+                  children: [
+                        _rootQuestionSection(),
+                        _nestedCommentListView()
+                      ]
                 ),
             floatingActionButton: FloatingActionButton(
               onPressed: _scrollToTop,
@@ -85,45 +87,71 @@ class ChatPageState extends State<ChatPage> implements ChatView{
         duration: Duration(milliseconds: 500), curve: Curves.easeIn);
   }
 
-  List<Widget> _commentsSection(){
+//  List<Widget> _commentsSection(){
+//    final flattenedComments = widget.presenter.flattenChats(chat);
+//    final List<Widget> res = [];
+//    flattenedComments.forEach((c) => res.addAll(CommentItemPage.getViews(c)));
+//    res.add(Container(height: 100));
+//    return res;
+//  }
+
+  Widget _nestedCommentListView() {
     final flattenedComments = widget.presenter.flattenChats(chat);
-    final List<Widget> res = [];
-    flattenedComments.forEach((c) => res.addAll(CommentItemPage.getViews(c)));
-    res.add(Container(height: 100));
-    return res;
+
+//    return Column(
+//        children:
+//        flattenedComments.map<Widget>(
+//                (ci)=>CommentItemPage(chatItem: ci)
+//        ).toList()..add(Container(height: 25)));
+
+//  return ListView(children: <Widget>[Text("")],);
+    return Column(children: [Text("")]);
+
+
+//    return ListView.builder(
+//        controller: _nestedScrollController,
+//        shrinkWrap: true,
+//        itemCount:flattenedComments.length + 1,
+//        itemBuilder:
+//            (BuildContext context, int index) =>
+//                index == flattenedComments.length ? Container(height: 25) : CommentItemPage(chatItem: flattenedComments[index])
+//    );
+
+//    return Container(
+//        height: 400,
+//        child: NestedScrollView(
+//          controller: _nestedScrollController,
+//          headerSliverBuilder: (BuildContext context, bool b) {
+//            return [
+//              SliverAppBar(
+//                  backgroundColor: Colors.transparent,
+//                  centerTitle: false,
+//                  title: MediaQuery.removePadding(
+//                    removeLeft: true,
+//                    child: _commentsSummary(),
+//                    context: context,
+//                  ),
+//                  pinned: true,
+//                  automaticallyImplyLeading: false,
+//                  flexibleSpace:
+//                  FlexibleSpaceBar()
+//              )
+//            ];
+//          },
+//          body: Padding(
+//            padding: const EdgeInsets.all(8.0),
+//            child:
+//            ListView.builder(
+//              physics: NeverScrollableScrollPhysics(),
+////              shrinkWrap: true,
+//              itemCount: flattenedComments.length,
+//              itemBuilder: (BuildContext context, int index) =>
+//                  CommentItemPage(chatItem: flattenedComments[index]),
+//            ),
+//          ),
+//        )
+//    );
   }
-
-  Widget _nestedCommentListView() =>
-        Container(
-            height: 400,
-            child: NestedScrollView(
-              controller: _nestedScrollController,
-              headerSliverBuilder: (BuildContext context, bool b){
-                return [
-                  SliverAppBar(
-                      backgroundColor: Colors.transparent,
-                      centerTitle: false,
-                      title: MediaQuery.removePadding(
-                        removeLeft: true,
-                        child: _commentsSummary(),
-                        context: context,
-                      ),
-                      pinned: false,
-                      automaticallyImplyLeading: false,
-                      flexibleSpace:
-                        FlexibleSpaceBar()
-                  )
-                ];
-              },
-              body: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ListView(
-                    children: _commentsSection()
-                ),
-              ),
-            )
-        );
-
   
   Widget _commentsSummary() =>
     Row(
@@ -160,14 +188,15 @@ class ChatPageState extends State<ChatPage> implements ChatView{
         ],
       );
 
-  List<Widget> _rootQuestionSection() =>
+  Widget _rootQuestionSection() =>
+    Column(children:
     [
       _chatRootHeader(),
       _rootComment(),
       _maybeImgSection(),
       SizedBox(height: 25),
       RootCommentButtonSection()
-    ];
+    ]);
 
   Widget _maybeImgSection() {
     final fileInfo = chat.chatRoot.fileInfo;
