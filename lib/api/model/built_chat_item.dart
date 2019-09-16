@@ -17,7 +17,7 @@ abstract class BuiltChatItem implements Built<BuiltChatItem, BuiltChatItemBuilde
   @nullable
   BuiltList<BuiltChatItem> get children;
   @nullable
-  BuiltFileInfo get fileInfo;
+  BuiltList<BuiltFileInfo> get fileInfos;
 
   BuiltChatItem._();
 

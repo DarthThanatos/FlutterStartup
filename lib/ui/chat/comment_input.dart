@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/ui/chat/chat_image_adder.dart';
 
+import 'image_grid_section.dart';
+
 class CommentInput extends StatefulWidget {
 
   @override
@@ -8,19 +10,24 @@ class CommentInput extends StatefulWidget {
 
 }
 
-class CommentInputState extends State<CommentInput> {
+class CommentInputState extends State<CommentInput> implements ImageInputListener {
+
+  Set<String> _photosPaths = Set();
 
   @override
   Widget build(BuildContext context){
-    return Container(
-      child:
-      Row(
-        children: <Widget>[
-          _commentEditText(),
-          _addImageBtn(),
-          _addCommentBtn()
-        ],
-      ),
+    return Column(
+      children:
+      [
+        Row(
+          children: <Widget>[
+            _commentEditText(),
+            _addImageBtn(),
+            _addCommentBtn()
+          ],
+        ),
+        ImageGridSection(listener: this, photosPaths: _photosPaths)
+      ]
     );
   }
 
@@ -60,7 +67,13 @@ class CommentInputState extends State<CommentInput> {
 
   void _onAddImage() async{
     print("Adding image");
-    await ChatImageAdderDialog.getImage(context);
+    String res = await ChatImageAdderDialog.getImage(context);
+    print("Resulting image path: $res");
+    if(res == null || res == "") return;
+    final newSet = Set.of(_photosPaths)..add(res);
+    setState(() {
+      _photosPaths = newSet;
+    });
   }
 
   void _onAddComment(){
@@ -72,5 +85,13 @@ class CommentInputState extends State<CommentInput> {
         child: Icon(icon, size: 40,),
         onTap: onTap,
       );
+
+  @override
+  void onImageRemoved(String path) {
+    final newSet = _photosPaths.difference(Set.from([path]));
+    setState(() {
+      _photosPaths = newSet;
+    });
+  }
 
 }

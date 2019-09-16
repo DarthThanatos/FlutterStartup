@@ -8,7 +8,7 @@ import 'package:inject/inject.dart';
 @module
 class ChopperModule{
 
-  final String baseUrl = "http://192.168.0.100:8080";
+  final String baseUrl = "http://192.168.0.73:8080";
 
   @provide
   BuiltValueConverter converter() => BuiltValueConverter();

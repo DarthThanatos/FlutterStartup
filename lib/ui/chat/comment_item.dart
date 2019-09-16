@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/api/model/built_chat_item.dart';
 import 'package:flutter_app/util/date-util.dart';
 
-import 'image_section.dart';
+import 'image_grid_section.dart';
 
 class CommentItemPage {
 
@@ -15,7 +15,7 @@ class CommentItemPage {
       SizedBox(height: 10),
       _commentText(),
       SizedBox(height: 10),
-      _maybeImgSection(),
+      _imgsGrid(),
       _commentBottomRow(),
       Divider()
     ];
@@ -111,8 +111,9 @@ class CommentItemPage {
         onPressed: onPressed
       );
 
-  static Widget _maybeImgSection() {
-    final fileInfo = chatItem.fileInfo;
-    return fileInfo == null ? Container() : ImageSection(fileInfo: fileInfo);
+  static Widget _imgsGrid(){
+    final Set<String> photosPaths = chatItem.fileInfos.map((fileInfo) => fileInfo.url).toSet();
+    return ImageGridSection(photosPaths: photosPaths);
   }
+
 }

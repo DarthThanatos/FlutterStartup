@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ChatImageAdder extends StatelessWidget{
 
@@ -10,9 +13,9 @@ class ChatImageAdder extends StatelessWidget{
           SizedBox(height: 25),
           _header(),
           Divider(),
-          _takePhotoBtn(),
-          _pickFromGaleryBtn(),
-          _selectUrlBtn(),
+          _takePhotoBtn(context),
+          _pickFromGaleryBtn(context),
+          _selectUrlBtn(context),
           Divider(),
           _cancelBtn(context)
         ],
@@ -34,41 +37,46 @@ class ChatImageAdder extends StatelessWidget{
       );
   
   
-  Widget _takePhotoBtn() =>
-    _iconTxtButton(Icons.photo_camera, "Zrób zdjęcie", _onTakePhoto);
+  Widget _takePhotoBtn(BuildContext context) =>
+    _iconTxtButton(Icons.photo_camera, "Zrób zdjęcie", _onTakePhoto, context);
 
-  Widget _pickFromGaleryBtn() =>
-      _iconTxtButton(Icons.burst_mode, "Wybierz z galerii", _onGoToGallery);
+  Widget _pickFromGaleryBtn(BuildContext context) =>
+      _iconTxtButton(Icons.burst_mode, "Wybierz z galerii", _onGoToGallery, context);
 
-  Widget _selectUrlBtn() => 
-      _iconTxtButton(Icons.link, "Wstaw url", _onInputUrl);
+  Widget _selectUrlBtn(BuildContext context) =>
+      _iconTxtButton(Icons.link, "Wstaw url", _onInputUrl, context);
 
   Widget _cancelBtn(BuildContext context) =>
       FlatButton(child: Text("Anuluj"),
         onPressed: (){
-          Navigator.pop(context);
+          Navigator.pop(context, "");
         },
       );
 
-  void _onTakePhoto(){
+  void _onTakePhoto(BuildContext context) async {
     print("Taking photo");
+    File image = await ImagePicker.pickImage(source: ImageSource.camera);
+    Navigator.pop(context, image != null ? image.path: "");
   }
 
-  void _onGoToGallery(){
+  void _onGoToGallery(BuildContext context) async {
     print("Going to gallery");
+    File image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    Navigator.pop(context, image != null ? image.path: "");
   }
 
-  void _onInputUrl() {
+  void _onInputUrl(BuildContext context) {
     print("Input url");
+    Navigator.pop(context, "inputurl");
   }
 
-  Widget _iconTxtButton(IconData iconData, String text, void Function() onPressed) =>
+  Widget _iconTxtButton(IconData iconData, String text, void Function(BuildContext) onPressed, BuildContext context) =>
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
             SizedBox(width: 10),
             FlatButton.icon(
-              onPressed: onPressed,
+              onPressed: () => onPressed(context),
               color: Colors.white,
               padding: EdgeInsets.all(10.0),
               icon: Icon(iconData),
@@ -80,9 +88,9 @@ class ChatImageAdder extends StatelessWidget{
 
 class ChatImageAdderDialog{
 
-    static Future<void> getImage(BuildContext context) =>
-      showDialog<void>(
-        barrierDismissible: true,
+    static Future<String> getImage(BuildContext context) =>
+      showDialog<String>(
+        barrierDismissible: false,
         context: context,
         builder: (BuildContext context) {
           return Column(

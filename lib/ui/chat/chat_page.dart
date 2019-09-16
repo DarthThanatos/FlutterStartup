@@ -4,10 +4,10 @@ import 'package:flutter_app/api/model/built_chat.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:flutter_app/ui/chat/comment_input.dart';
 import 'package:flutter_app/ui/chat/root_comment_button_section.dart';
-import 'package:flutter_app/util/list-util.dart';
+import 'package:flutter_app/widget/NestedList.dart';
 import 'package:inject/inject.dart';
 
-import 'image_section.dart';
+import 'image_grid_section.dart';
 import 'comment_item.dart';
 import 'contract.dart';
 
@@ -63,9 +63,12 @@ class ChatPageState extends State<ChatPage> implements ChatView{
             body:
                 ListView(
                   controller: _scrollController,
-                  shrinkWrap: true,
                   children:
-                      ListUtil.mergedList(_rootQuestionSection(), [_nestedCommentListView()])
+                    _rootQuestionSection()
+                      ..add(SizedBox(height: 10))
+                      ..add(_commentsSummary())
+                      ..add(SizedBox(height: 10))
+                      ..add(_nestedCommentListView())
                 ),
             floatingActionButton: FloatingActionButton(
               onPressed: _scrollToTop,
@@ -96,32 +99,18 @@ class ChatPageState extends State<ChatPage> implements ChatView{
   Widget _nestedCommentListView() =>
         Container(
             height: 400,
-            child: NestedScrollView(
-              controller: _nestedScrollController,
-              headerSliverBuilder: (BuildContext context, bool b){
-                return [
-                  SliverAppBar(
-                      backgroundColor: Colors.transparent,
-                      centerTitle: false,
-                      title: MediaQuery.removePadding(
-                        removeLeft: true,
-                        child: _commentsSummary(),
-                        context: context,
-                      ),
-                      pinned: false,
-                      automaticallyImplyLeading: false,
-                      flexibleSpace:
-                        FlexibleSpaceBar()
-                  )
-                ];
-              },
-              body: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ListView(
-                    children: _commentsSection()
-                ),
-              ),
-            )
+            child:
+              NestedList(
+                  controller: _nestedScrollController,
+                  body:
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child:
+                        ListView(
+                          children: _commentsSection()
+                        ),
+                    )
+              )
         );
 
   
@@ -129,6 +118,7 @@ class ChatPageState extends State<ChatPage> implements ChatView{
     Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: <Widget>[
+        SizedBox(width: 10),
         _commentIcon(),
         SizedBox(width: 10),
         _commentsAmount()
@@ -148,6 +138,22 @@ class ChatPageState extends State<ChatPage> implements ChatView{
       AppBar(
         centerTitle: true,
         title: Text("Dyskusja"),
+        bottom:
+          PreferredSize(
+            child:
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: <Widget>[
+                  Text(
+                    chat.title,
+                    style: TextStyle(color: Colors.white, fontSize: 15),
+                  ),
+                ],
+              ),
+            ),
+            preferredSize: Size(200, 15),
+          ),
         actions: <Widget>[
           IconButton(
             icon: new Icon(Icons.favorite),
@@ -164,14 +170,13 @@ class ChatPageState extends State<ChatPage> implements ChatView{
     [
       _chatRootHeader(),
       _rootComment(),
-      _maybeImgSection(),
-      SizedBox(height: 25),
+      _imgsGrid(),
       RootCommentButtonSection()
     ];
 
-  Widget _maybeImgSection() {
-    final fileInfo = chat.chatRoot.fileInfo;
-    return fileInfo == null ? Container() : ImageSection(fileInfo: fileInfo);
+  Widget _imgsGrid(){
+    final Set<String> photosPaths = chat.chatRoot.fileInfos.map((fileInfo) => fileInfo.url).toSet();
+    return ImageGridSection(photosPaths: photosPaths);
   }
 
   Widget _chatRootHeader() =>
@@ -286,12 +291,16 @@ class BottomSheetWidget extends StatelessWidget{
 
   @override
   Widget build(BuildContext context)=>
-    Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Divider(),
-        CommentInput(),
-      ],
+    Card(
+      elevation: 5.0,
+      child:
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+//          Divider(),
+          CommentInput(),
+        ],
+      ),
     );
 
 }
