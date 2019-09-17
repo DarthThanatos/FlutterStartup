@@ -71,7 +71,7 @@ class ImageGridSection extends StatelessWidget {
         path,
         fit: BoxFit.scaleDown,
         width: FILE_TILE_WIDTH,
-        height: FILE_TILE_HEIGHT
+        height: FILE_TILE_HEIGHT,
       )
       : Image.file(
           File(path),

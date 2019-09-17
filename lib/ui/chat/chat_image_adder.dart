@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'url_picker.dart';
+
 class ChatImageAdder extends StatelessWidget{
 
   @override
@@ -65,10 +67,12 @@ class ChatImageAdder extends StatelessWidget{
     Navigator.pop(context, image != null ? image.path: "");
   }
 
-  void _onInputUrl(BuildContext context) {
+  void _onInputUrl(BuildContext context) async {
     print("Input url");
-    Navigator.pop(context, "inputurl");
+    String res = await BottomDialog.getImage(context, UrlPicker());
+    Navigator.pop(context, res);
   }
+
 
   Widget _iconTxtButton(IconData iconData, String text, void Function(BuildContext) onPressed, BuildContext context) =>
         Row(
@@ -86,9 +90,9 @@ class ChatImageAdder extends StatelessWidget{
         );
 }
 
-class ChatImageAdderDialog{
+class BottomDialog{
 
-    static Future<String> getImage(BuildContext context) =>
+    static Future<String> getImage(BuildContext context, Widget dialogContents) =>
       showDialog<String>(
         barrierDismissible: false,
         context: context,
@@ -101,7 +105,7 @@ class ChatImageAdderDialog{
                 child: Container(
                   width: MediaQuery.of(context).size.width,
                   color: Colors.white,
-                  child: ChatImageAdder()
+                  child: dialogContents
                 ),
               )
             ],

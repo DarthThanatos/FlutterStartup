@@ -3,25 +3,43 @@ import 'package:flutter_app/api/model/built_chat_item.dart';
 import 'package:flutter_app/util/date-util.dart';
 
 import 'image_grid_section.dart';
+import 'related_comment_section.dart';
 
-class CommentItemPage {
 
-  static BuiltChatItem chatItem;
+class CommentItemPage extends StatelessWidget{
 
-  static List<Widget> getViews(BuiltChatItem chatItem) {
-    CommentItemPage.chatItem = chatItem;
-    return [
-      _authorRow(),
-      SizedBox(height: 10),
-      _commentText(),
-      SizedBox(height: 10),
-      _imgsGrid(),
-      _commentBottomRow(),
-      Divider()
-    ];
-  }
+  final BuiltChatItem chatItem;
+  final BuiltChatItem relatedComment;
+  final RespondToCommentListener respondListener;
 
-  static Widget _authorRow() =>
+  CommentItemPage({Key key, @required this.chatItem, @required this.respondListener, this.relatedComment}): super(key: key);
+
+  @override
+  Widget build(BuildContext context) =>
+    Column(
+      children: <Widget>[
+        _authorRow(),
+        SizedBox(height: 10),
+        _maybeRelatedCommentSection(),
+        SizedBox(height: 10),
+        _commentText(),
+        SizedBox(height: 10),
+        _imgsGrid(),
+        _commentBottomRow(),
+        Divider()
+      ],
+    );
+
+  Widget _maybeRelatedCommentSection() =>
+      chatItem.parentId == null
+          ? Container()
+          : RelatedCommentSection (
+            relatedComment: relatedComment,
+            inputMode: false,
+            relatedCommentListener: respondListener
+          );
+
+  Widget _authorRow() =>
     Row(
       children: <Widget>[
         _authorImg(),
@@ -31,64 +49,64 @@ class CommentItemPage {
       ],
     );
 
-  static Widget _authorImg() =>
-      Container(
-        width: 20,
-        height: 20,
-        decoration: new BoxDecoration(
-            shape: BoxShape.circle,
-            image: new DecorationImage(
-                image: NetworkImage(chatItem.user.avatarUrl),
-                fit: BoxFit.fill
-            )
-        ),
-      );
+  Widget _authorImg() =>
+    Container(
+      width: 20,
+      height: 20,
+      decoration: new BoxDecoration(
+          shape: BoxShape.circle,
+          image: new DecorationImage(
+              image: NetworkImage(chatItem.user.avatarUrl),
+              fit: BoxFit.fill
+          )
+      ),
+    );
 
-  static Widget _authorName() =>
-      Text(
-        chatItem.user.userName,
-        style: TextStyle(fontSize: 16)
-      );
+  Widget _authorName() =>
+    Text(
+      chatItem.user.userName,
+      style: TextStyle(fontSize: 16)
+    );
 
-  static Widget _commentText() =>
-      Text(
-        chatItem.text,
-        style: TextStyle(fontSize: 22),
-      );
+  Widget _commentText() =>
+    Text(
+      chatItem.text,
+      style: TextStyle(fontSize: 22),
+    );
 
-  static Widget _commentBottomRow() =>
-      Row(
-        children: <Widget>[
-          SizedBox(width: 10),
-          _iconizedButton(Icons.undo, "Odpowiedź", _onAnswer),
-          SizedBox(width: 10),
-          _iconizedButton(Icons.assistant_photo, "Zgłoś", _onReport),
-          _expandedLike()
-        ],
-      );
+  Widget _commentBottomRow() =>
+    Row(
+      children: <Widget>[
+        SizedBox(width: 10),
+        _iconizedButton(Icons.undo, "Odpowiedź", _onAnswer),
+        SizedBox(width: 10),
+        _iconizedButton(Icons.assistant_photo, "Zgłoś", _onReport),
+        _expandedLike()
+      ],
+    );
 
-  static Widget _expandedLike() =>
-      Expanded(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [_iconizedButton(Icons.thumb_up, "", _onLike)],
-        ),
-      );
+  Widget _expandedLike() =>
+    Expanded(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [_iconizedButton(Icons.thumb_up, "", _onLike)],
+      ),
+    );
 
-  static void _onAnswer(){
+  void _onAnswer(){
     print("Answering on comment with id: ${chatItem.chatItemId}");
+    respondListener.onRespondToComment(chatItem);
   }
   
-  static void _onReport(){
+  void _onReport(){
     print("Reporting comment with id: ${chatItem.chatItemId}");
   }
 
-  static void _onLike(){
+  void _onLike(){
     print("Liking comment with id: ${chatItem.chatItemId}");
-
   }
 
-  static Widget _time() =>
+  Widget _time() =>
       Expanded(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -101,7 +119,7 @@ class CommentItemPage {
         ),
       );
 
-  static Widget _iconizedButton(IconData icon, String text, void Function() onPressed) =>
+  Widget _iconizedButton(IconData icon, String text, void Function() onPressed) =>
       FlatButton.icon(
         icon: Icon(icon), //`Icon` to display
         label: Text(
@@ -111,9 +129,17 @@ class CommentItemPage {
         onPressed: onPressed
       );
 
-  static Widget _imgsGrid(){
+  Widget _imgsGrid(){
     final Set<String> photosPaths = chatItem.fileInfos.map((fileInfo) => fileInfo.url).toSet();
     return ImageGridSection(photosPaths: photosPaths);
   }
 
+
+}
+
+
+abstract class RespondToCommentListener{
+  void onRespondToComment(BuiltChatItem comment);
+  void onRemoveRelatedComment();
+  void onGoToComment(BuiltChatItem chatItem);
 }

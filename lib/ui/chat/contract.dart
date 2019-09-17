@@ -13,4 +13,6 @@ abstract class ChatPresenter {
   void detachView();
   void downloadAllChats();
   void downloadChat(int chatId);
+  BuiltChatItem getRelatedOrNull(BuiltChatItem commentItem);
+  int idToIndex(int id);
 }
