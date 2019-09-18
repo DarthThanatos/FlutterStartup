@@ -9,13 +9,13 @@ part 'built_chat_item.g.dart';
 
 abstract class BuiltChatItem implements Built<BuiltChatItem, BuiltChatItemBuilder> {
 
+  @nullable //null only in case of post!
   int get chatItemId;
   int get chatId;
+  @nullable //null only in case of post!
   BuiltCommentAuthor get user;
   String get text;
   String get creationTime;
-  @nullable
-  BuiltList<BuiltChatItem> get children;
   @nullable
   BuiltList<BuiltFileInfo> get fileInfos;
   @nullable

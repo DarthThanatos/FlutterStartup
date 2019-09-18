@@ -24,16 +24,19 @@ class ChatPage extends StatefulWidget {
 
 }
 
-class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommentListener {
+class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommentListener, OnMessageReadyListener {
 
   BuiltChat chat;
   BuiltChatItem currentlyRespondingChatItem;
+  bool _cleanInput = false;
 
   ScrollController _nestedController;
+  ScrollController _outerController;
 
   @override
   void initState() {
     super.initState();
+    _outerController = ScrollController();
     _nestedController = ScrollController();
     widget.presenter.attachView(this);
     widget.presenter.downloadChat(666);
@@ -41,6 +44,7 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
 
   @override
   void dispose() {
+    _outerController.dispose();
     _nestedController.dispose();
     widget.presenter.detachView();
     super.dispose();
@@ -53,16 +57,18 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
 
   Widget _upToDateBottomSheet(){
     if(_bottomSheetWidget == null){
-      _bottomSheetWidget = BottomSheetWidget(respondToCommentListener: this);
+      _bottomSheetWidget = BottomSheetWidget(respondToCommentListener: this, onMessageReadyListener: this);
     }
     else {
       _bottomSheetWidget =
-        currentlyRespondingChatItem == _bottomSheetWidget.currentlyRespondingChatItem
+        currentlyRespondingChatItem == _bottomSheetWidget.currentlyRespondingChatItem && !_cleanInput
             ? _bottomSheetWidget
             : BottomSheetWidget(
               currentlyRespondingChatItem: currentlyRespondingChatItem,
-              respondToCommentListener: this
+              respondToCommentListener: this,
+              onMessageReadyListener: this
             );
+      _cleanInput = false;
     }
     return _bottomSheetWidget;
   }
@@ -78,6 +84,7 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
               _upToDateBottomSheet(),
             body:
                 ListView(
+                  controller: _outerController,
                   children:
                     _rootQuestionSection()
                       ..add(SizedBox(height: 10))
@@ -90,82 +97,86 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
 
   Widget _nestedCommentListView() {
     final flattenedComments = chat.comments;
+
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _scrollToBottom());
+
     return Container(
         height: 400,
         child:
         NestedList(
-            controller: _nestedController,
             body:
             Padding(
               padding: const EdgeInsets.all(8.0),
               child:
-                  Builder(builder: (BuildContext context){
-                    WidgetsBinding.instance.addPostFrameCallback(
-                            (_) => _logNestedOffset(context)
-                    );
-                    return ListView.builder(
-                        itemCount: flattenedComments.length + 2,
-                        itemBuilder: (BuildContext context, int index)
-                          => _commentSectionIndexToView(index, flattenedComments)
-                    );
-                  })
+                ListView.builder(
+                  controller: _nestedController,
+                  itemCount: flattenedComments.length + 2,
+                  itemBuilder: (BuildContext context, int index) =>
+                      _commentSectionIndexToView(index, flattenedComments)
+                )
             )
         )
     );
   }
 
-  Widget _commentSectionIndexToView(int index, BuiltList<BuiltChatItem> items){
-    if(index == 0) return _moreCommentsBtn();
-    if(index <= items.length) {
-      final item = items[index - 1];
-      final relatedComment = widget.presenter.getRelatedOrNull(item);
-      return
-        Builder(
-          builder: (BuildContext context) {
-            WidgetsBinding.instance.addPostFrameCallback(
-              (_) => _logSizeOf(context, index - 1)
-            );
-            return CommentItemPage(chatItem: item, respondListener: this, relatedComment: relatedComment);
-          }
-        );
-    }
-    return Container(height: 75);
+  void _scrollToBottom() {
+    _nestedController.animateTo(_nestedController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 500), curve: Curves.easeIn);
   }
 
-  Map<int, double> _indexToPosition = Map();
-  double _nestedOffset = 0;
+  Widget _commentSectionIndexToView(int index, BuiltList<BuiltChatItem> items){
+    if(index < items.length)
+      return _commentItemPageInstance(index, items);
+    if(index == items.length)
+      return _moreCommentsButton();
+    return Container(height: 100);
+  }
 
+  Widget _commentItemPageInstance(int index, BuiltList<BuiltChatItem> items){
+    final item = items[index];
+    final relatedComment = widget.presenter.getRelatedOrNull(item);
+    return
+      Builder(builder: (BuildContext context) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _logCommentViewHeight(context, index));
+        return CommentItemPage(chatItem: item, respondListener: this, relatedComment: relatedComment);
+      });
+
+  }
+
+  Widget _moreCommentsButton() =>
+    Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        InkWell(
+          onTap: () => widget.presenter.downloadChat(666),
+          child: Text("Odśwież komentarze"),
+        ),
+      ],
+    );
+
+  Map<int, double> _commentViewsHeights = Map();
+
+  void _logCommentViewHeight(BuildContext context, int index){
+    _commentViewsHeights[index] = (context.findRenderObject() as RenderBox).size.height;
+  }
+
+  double _heightOfCommentViewsToIndex(int index){
+    double sum = 0;
+    for (var i = 0; i < index; i++){
+      sum += _commentViewsHeights[i];
+    }
+    return sum;
+  }
 
   @override
   void onGoToComment(BuiltChatItem chatItem) {
     int index = widget.presenter.idToIndex(chatItem.chatItemId);
     if(index == null) return;
-    double scrollPosition = _indexToPosition[index];
-    print("Going to comment with id: ${chatItem.chatItemId} $scrollPosition $index");
-    _nestedController.animateTo(scrollPosition, duration: Duration(milliseconds: 500), curve: Curves.easeIn);
-  }
-  
-  void _logNestedOffset(BuildContext context){
-    final RenderBox renderBoxRed = context.findRenderObject();
-    final positionRed = renderBoxRed.localToGlobal(Offset.zero);
-    _nestedOffset = positionRed.dy;
+    double y = _heightOfCommentViewsToIndex(index);
+    _nestedController.animateTo(y, duration: Duration(milliseconds: 500), curve: Curves.easeIn);
   }
 
-  void _logSizeOf(BuildContext context, int index) async {
-    final RenderBox renderBoxRed = context.findRenderObject();
-    final positionRed = renderBoxRed.localToGlobal(Offset(0, _nestedOffset));
-    double pY = positionRed.dy - _nestedOffset;
-    _indexToPosition[index] = pY;
-    print("SIZE of Red: $pY $_nestedOffset $index");
-  }
-
-  Widget _moreCommentsBtn() =>
-    Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        FlatButton(child: Text("Wczytaj więcej"), onPressed: (){},),
-      ],
-    );
 
   Widget _commentsSummary() =>
     Row(
@@ -298,9 +309,12 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
 
   @override
   void displayChat(BuiltChat chat) {
-    print("displaying chat");
     setState(
-        (){this.chat = chat;}
+        (){
+          this.chat = chat;
+          currentlyRespondingChatItem = null;
+          _cleanInput = true;
+        }
     );
   }
 
@@ -316,6 +330,11 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
     setState(() {
       currentlyRespondingChatItem = null;
     });
+  }
+
+  @override
+  void onMessageReady(String text, int parentComment, Set<String> paths) {
+    widget.presenter.sendMessage(paths, text, parentComment);
   }
 }
 
@@ -358,8 +377,14 @@ class BottomSheetWidget extends StatelessWidget{
 
   final BuiltChatItem currentlyRespondingChatItem;
   final RespondToCommentListener respondToCommentListener;
+  final OnMessageReadyListener onMessageReadyListener;
 
-  BottomSheetWidget({Key key, this.currentlyRespondingChatItem, @required this.respondToCommentListener});
+  BottomSheetWidget({
+    Key key,
+    this.currentlyRespondingChatItem,
+    @required this.respondToCommentListener,
+    @required this.onMessageReadyListener
+  });
 
   @override
   Widget build(BuildContext context)=>
@@ -369,7 +394,11 @@ class BottomSheetWidget extends StatelessWidget{
       Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          CommentInput(maybeRelatedComment: currentlyRespondingChatItem, respondToCommentListener: respondToCommentListener),
+          CommentInput(
+              maybeRelatedComment: currentlyRespondingChatItem,
+              respondToCommentListener: respondToCommentListener,
+              onMessageReadyListener: onMessageReadyListener
+          ),
         ],
       ),
     );

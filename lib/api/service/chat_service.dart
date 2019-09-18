@@ -1,6 +1,7 @@
 import 'package:chopper/chopper.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:flutter_app/api/model/built_chat.dart';
+import 'package:flutter_app/api/model/built_chat_item.dart';
 part 'chat_service.chopper.dart';
 
 @ChopperApi(baseUrl: "/chat")
@@ -10,6 +11,9 @@ abstract class ChatService extends ChopperService {
 
     @Post()
     Future<Response<BuiltChat>> createChat();
+
+    @Post()
+    Future<Response<BuiltChatItem>> postChatItem(@Body() BuiltChatItem item);
 
     @Get()
     Future<Response<BuiltList<BuiltChat>>> getAllChats();

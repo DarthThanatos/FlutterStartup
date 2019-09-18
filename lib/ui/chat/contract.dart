@@ -9,10 +9,11 @@ abstract class ChatView {
 
 abstract class ChatPresenter {
   void attachView(ChatView view);
-  BuiltList<BuiltChatItem> flattenChats(BuiltChat chat);
   void detachView();
   void downloadAllChats();
   void downloadChat(int chatId);
   BuiltChatItem getRelatedOrNull(BuiltChatItem commentItem);
   int idToIndex(int id);
+  void sendMessage(Set<String> filePaths, String text, int parentComment);
+
 }

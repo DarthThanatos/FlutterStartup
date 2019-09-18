@@ -137,7 +137,6 @@ class CommentItemPage extends StatelessWidget{
 
 }
 
-
 abstract class RespondToCommentListener{
   void onRespondToComment(BuiltChatItem comment);
   void onRemoveRelatedComment();

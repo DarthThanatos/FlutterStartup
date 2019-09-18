@@ -2,13 +2,15 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import 'image_viewer.dart';
+
 const double FILE_TILE_HEIGHT = 125;
 const double FILE_TILE_WIDTH = 50;
 
 class ImageGridSection extends StatelessWidget {
 
   final Set<String> photosPaths;
-  final ImageInputListener listener;
+  final ImageInputListener listener; // contract: if listener is null, then we are in the nested comment section, otherwise we are in the comment input section
   
   ImageGridSection({Key key, @required this.photosPaths, this.listener}): super(key: key);
   
@@ -25,7 +27,7 @@ class ImageGridSection extends StatelessWidget {
                   crossAxisCount: 3,
                   mainAxisSpacing: 10,
                   crossAxisSpacing: 5,
-                  children: photosPaths.map((path)=>_imageTile(path)).toList()
+                  children: photosPaths.map((path)=>_imageTile(context, path)).toList()
               ),
           )
     );
@@ -38,11 +40,14 @@ class ImageGridSection extends StatelessWidget {
   }
 
   double _getTotalHeight() {
-    return photosPaths.length / 3 * (FILE_TILE_HEIGHT + 15);
+    if(photosPaths.length == 0) return 0;
+    if(photosPaths.length > 3)
+      return photosPaths.length / 3 * (FILE_TILE_HEIGHT + 15);
+    return FILE_TILE_HEIGHT + 15;
   }
 
-  Widget _imageTile(String path) {
-    final image = _buildImage(path);
+  Widget _imageTile(BuildContext context, String path) {
+    final image = _buildImage(context, path);
     return Container(
       decoration: BoxDecoration(border: Border.all()),
       child: listener != null ? Row(
@@ -65,21 +70,38 @@ class ImageGridSection extends StatelessWidget {
     );
   }
 
-  Widget _buildImage(String path) =>
-      path.startsWith("http")
-      ? Image.network(
-        path,
-        fit: BoxFit.scaleDown,
-        width: FILE_TILE_WIDTH,
-        height: FILE_TILE_HEIGHT,
-      )
-      : Image.file(
-          File(path),
+  Widget _buildImage(BuildContext context, String path) =>
+      _imageContainer(
+        context,
+        path.startsWith("http")
+        ? Image.network(
+          path,
           fit: BoxFit.scaleDown,
           width: FILE_TILE_WIDTH,
-          height: FILE_TILE_HEIGHT
+          height: FILE_TILE_HEIGHT,
+        )
+        : Image.file(
+            File(path),
+            fit: BoxFit.scaleDown,
+            width: FILE_TILE_WIDTH,
+            height: FILE_TILE_HEIGHT
+        ), path
       );
 
+  Widget _imageContainer(BuildContext context, Widget child, String path) =>
+      listener == null
+        ? InkWell(
+          child: child,
+          onTap: () => _onDisplayImage(context, path)
+        )
+        : Container(
+          child: child
+        );
+
+  void _onDisplayImage(BuildContext context, String path){
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ImageViewer(imgPath: path)));
+  }
+  
   void _removeImg(String path){
     listener.onImageRemoved(path);
   }

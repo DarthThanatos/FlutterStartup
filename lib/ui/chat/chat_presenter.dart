@@ -1,18 +1,23 @@
-import 'package:built_collection/src/list.dart';
+import 'dart:async';
 
+import 'package:chopper/chopper.dart';
 import 'package:flutter_app/api/model/built_chat.dart';
 import 'package:flutter_app/api/model/built_chat_item.dart';
+import 'package:flutter_app/api/model/built_file_info.dart';
 import 'package:flutter_app/api/service/chat_service.dart';
+import 'package:flutter_app/api/service/file_service.dart';
 
+import 'package:built_collection/built_collection.dart';
 import 'contract.dart';
 
 class ChatPresenterImpl implements ChatPresenter{
 
-  ChatView view;
+  static ChatView view;
 
   final ChatService chatService;
+  final FileService fileService;
 
-  ChatPresenterImpl(this.chatService);
+  ChatPresenterImpl(this.chatService, this.fileService);
 
   @override
   void downloadAllChats() {
@@ -21,8 +26,8 @@ class ChatPresenterImpl implements ChatPresenter{
   }
 
   @override
-  void attachView(ChatView view) {
-    this.view = view;
+  void attachView(ChatView incomingView) {
+    view = incomingView;
   }
 
   @override
@@ -30,7 +35,7 @@ class ChatPresenterImpl implements ChatPresenter{
     view = null;
   }
 
-  BuiltChat _chat;
+  static BuiltChat _chat;
 
   @override
   void downloadChat(int chatId) {
@@ -40,20 +45,6 @@ class ChatPresenterImpl implements ChatPresenter{
         view.displayChat(res.body);
       }
     );
-  }
-
-  @override
-  BuiltList<BuiltChatItem> flattenChats(BuiltChat chat) {
-    return _flattenChatsRec(chat.chatRoot.children);
-  }
-
-  BuiltList<BuiltChatItem> _flattenChatsRec(BuiltList<BuiltChatItem> currentChats){
-    if (currentChats == null) return BuiltList.from([]);
-    final res = [];
-    res.addAll(currentChats);
-    final flattenChildren = currentChats.map((child) => _flattenChatsRec(child.children));
-    flattenChildren.forEach((childList) => res.addAll(childList));
-    return BuiltList.from(res);
   }
 
   @override
@@ -76,5 +67,44 @@ class ChatPresenterImpl implements ChatPresenter{
     return null;
   }
 
+  @override
+  void sendMessage(Set<String> filePaths, String text, int parentComment) async {
+    if(text == "" && filePaths.length == 0) return;
+    _uploadFiles(filePaths)
+        .then((s)=> s.map((e)=>e.body).toList())
+        .then((l) => _onFilesProcessed(l, text, parentComment));
+  }
+
+  void _onFilesProcessed(List<BuiltFileInfo> infos, String text, int parentComment){
+    BuiltChatItem item = BuiltChatItem(
+        (BuiltChatItemBuilder builder) {
+          builder.chatId = _chat.chatId;
+          builder.parentId = parentComment;
+          builder.text = text;
+          builder.creationTime = DateTime.now().toString();
+          print("infos: $infos");
+          builder.fileInfos = ListBuilder()..addAll(infos);
+          return builder.build();
+        }
+    );
+    print("Sending item: $item");
+    chatService.postChatItem(item).then(
+        (res){
+          print("Got response: ${res.body}");
+          downloadChat(_chat.chatId);
+        }
+    );
+  }
+
+  Future<List<Response<BuiltFileInfo>>> _uploadFiles(Set<String> filePaths) async {
+    return Stream.fromFutures(
+        filePaths.map(
+            (p) =>
+              p.startsWith("http")
+                ? fileService.postFileUrl(p)
+                : fileService.postFile(p)
+        )
+    ).toList();
+  }
 
 }

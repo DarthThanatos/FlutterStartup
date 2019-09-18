@@ -10,8 +10,14 @@ class CommentInput extends StatefulWidget {
 
   final BuiltChatItem maybeRelatedComment;
   final RespondToCommentListener respondToCommentListener;
+  final OnMessageReadyListener onMessageReadyListener;
 
-  CommentInput({Key key, this.maybeRelatedComment, @required this.respondToCommentListener}): super(key: key);
+  CommentInput({
+    Key key,
+    this.maybeRelatedComment,
+    @required this.respondToCommentListener,
+    @required this.onMessageReadyListener
+  }): super(key: key);
 
   @override
   State<StatefulWidget> createState() => CommentInputState();
@@ -21,6 +27,19 @@ class CommentInput extends StatefulWidget {
 class CommentInputState extends State<CommentInput> implements ImageInputListener{
 
   Set<String> _photosPaths = Set();
+  TextEditingController _inputController;
+
+  @override
+  void initState() {
+    super.initState();
+    _inputController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _inputController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context){
@@ -56,6 +75,7 @@ class CommentInputState extends State<CommentInput> implements ImageInputListene
           padding: const EdgeInsets.all(8.0),
             child:
               TextFormField(
+                controller: _inputController,
                 maxLines: null,
                 decoration: InputDecoration(
                     labelText: 'Napisz komentarz'
@@ -95,7 +115,9 @@ class CommentInputState extends State<CommentInput> implements ImageInputListene
   }
 
   void _onAddComment(){
-    print("Adding comment");
+    String text = _inputController.text;
+    int parentId = widget.maybeRelatedComment?.parentId ?? null;
+    widget.onMessageReadyListener.onMessageReady(text, parentId, _photosPaths);
   }
 
   Widget _iconizedButton(IconData icon, void Function() onTap) =>
@@ -112,4 +134,8 @@ class CommentInputState extends State<CommentInput> implements ImageInputListene
     });
   }
 
+}
+
+abstract class OnMessageReadyListener{
+  void onMessageReady(String text, int parentComment, Set<String> paths);
 }

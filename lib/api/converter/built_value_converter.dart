@@ -5,6 +5,7 @@ import '../serializer/serializers.dart';
 class BuiltValueConverter extends JsonConverter {
   @override
   Request convertRequest(Request request) {
+    print("body: ${request.body}");
     return super.convertRequest(
       request.replace(
         body: request.body != null ? serializers.serializeWith(
