@@ -1,22 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/api/model/built_chat_item.dart';
 import 'package:flutter_app/ui/chat/chat_image_adder.dart';
 
-import 'comment_item.dart';
+import 'contract.dart';
 import 'image_grid_section.dart';
 import 'related_comment_section.dart';
 
 class CommentInput extends StatefulWidget {
 
-  final BuiltChatItem maybeRelatedComment;
-  final RespondToCommentListener respondToCommentListener;
-  final OnMessageReadyListener onMessageReadyListener;
+  final ChatPresenter chatPresenter;
 
   CommentInput({
     Key key,
-    this.maybeRelatedComment,
-    @required this.respondToCommentListener,
-    @required this.onMessageReadyListener
+    @required this.chatPresenter
   }): super(key: key);
 
   @override
@@ -24,15 +19,18 @@ class CommentInput extends StatefulWidget {
 
 }
 
-class CommentInputState extends State<CommentInput> implements ImageInputListener{
+class CommentInputState extends State<CommentInput>{
 
-  Set<String> _photosPaths = Set();
   TextEditingController _inputController;
 
   @override
   void initState() {
     super.initState();
     _inputController = TextEditingController();
+    _inputController.text = widget.chatPresenter.getMessageText();
+    _inputController.addListener((){
+      widget.chatPresenter.setMessageText(_inputController.text);
+    });
   }
 
   @override
@@ -51,21 +49,24 @@ class CommentInputState extends State<CommentInput> implements ImageInputListene
           children: <Widget>[
             _commentEditText(),
             _addImageBtn(),
-            _addCommentBtn()
+            _sendMessageBtn()
           ],
         ),
-        ImageGridSection(listener: this, photosPaths: _photosPaths)
+        ImageGridSection(
+            inputMode: true,
+            chatPresenter: widget.chatPresenter
+        )
       ]
     );
   }
 
   Widget _maybeRelatedCommentSection() =>
-    widget.maybeRelatedComment == null
+    widget.chatPresenter.getInputRelatedComment() == null
         ? Container()
         : RelatedCommentSection (
-          relatedComment: widget.maybeRelatedComment,
           inputMode: true,
-          relatedCommentListener: widget.respondToCommentListener
+          chatPresenter: widget.chatPresenter,
+          relatedComment: widget.chatPresenter.getInputRelatedComment(),
         );
 
   Widget _commentEditText() =>
@@ -95,30 +96,20 @@ class CommentInputState extends State<CommentInput> implements ImageInputListene
           )
       );
 
-  Widget _addCommentBtn() =>
+  Widget _sendMessageBtn() =>
       Row(
         children: <Widget>[
-          _iconizedButton(Icons.send, _onAddComment),
+          _iconizedButton(Icons.send, widget.chatPresenter.sendMessage),
           SizedBox(width: 10)
         ],
       );
 
   void _onAddImage() async{
-    print("Adding image");
     String res = await BottomDialog.getImage(context, ChatImageAdder());
-    print("Resulting image path: $res");
     if(res == null || res == "") return;
-    final newSet = Set.of(_photosPaths)..add(res);
-    setState(() {
-      _photosPaths = newSet;
-    });
+    widget.chatPresenter.addImage(res);
   }
 
-  void _onAddComment(){
-    String text = _inputController.text;
-    int parentId = widget.maybeRelatedComment?.parentId ?? null;
-    widget.onMessageReadyListener.onMessageReady(text, parentId, _photosPaths);
-  }
 
   Widget _iconizedButton(IconData icon, void Function() onTap) =>
       InkWell(
@@ -126,16 +117,4 @@ class CommentInputState extends State<CommentInput> implements ImageInputListene
         onTap: onTap,
       );
 
-  @override
-  void onImageRemoved(String path) {
-    final newSet = _photosPaths.difference(Set.from([path]));
-    setState(() {
-      _photosPaths = newSet;
-    });
-  }
-
-}
-
-abstract class OnMessageReadyListener{
-  void onMessageReady(String text, int parentComment, Set<String> paths);
 }

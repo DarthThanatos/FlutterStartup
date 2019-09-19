@@ -20,6 +20,10 @@ abstract class BuiltChatItem implements Built<BuiltChatItem, BuiltChatItemBuilde
   BuiltList<BuiltFileInfo> get fileInfos;
   @nullable
   int get parentId;
+  int get amountOfLikes;
+  bool get likedByMe;
+  bool get reportedByMe;
+
 
   BuiltChatItem._();
 

@@ -2,25 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/api/model/built_chat_item.dart';
 import 'package:flutter_app/util/size_util.dart';
 
-import 'comment_item.dart';
+import 'contract.dart';
 
 class RelatedCommentSection extends StatelessWidget{
 
-  final BuiltChatItem relatedComment;
-  final RespondToCommentListener relatedCommentListener;
   final bool inputMode;
+  final ChatPresenter chatPresenter;
+  final BuiltChatItem relatedComment;
 
   RelatedCommentSection(
       {Key key,
-        @required this.relatedComment,
-        @required this.relatedCommentListener,
-        @required this.inputMode
+        @required this.chatPresenter,
+        @required this.inputMode,
+        @required this.relatedComment
       }): super(key: key);
 
   @override
   Widget build(BuildContext context) =>
       Container(
-        width: SizeUtils.screenHeight(context),
+        width: screenHeight(context),
         child:
           Padding(
             padding: const EdgeInsets.only(left: 20, top: 10, right: 25),
@@ -85,21 +85,13 @@ class RelatedCommentSection extends StatelessWidget{
   Widget _scrollToCommentButton() =>
       InkWell(
         child: Icon(Icons.arrow_upward),
-        onTap: _onScrollToComment,
+        onTap: () => chatPresenter.goToComment(relatedComment),
       );
 
   Widget _removeCommentButton() =>
       InkWell(
         child: Icon(Icons.remove_circle),
-        onTap: _onRemoveComment,
+        onTap: () => chatPresenter.setInputRelatedComment(null),
       );
-
-  void _onScrollToComment(){
-    relatedCommentListener.onGoToComment(relatedComment);
-  }
-
-  void _onRemoveComment() {
-    relatedCommentListener.onRemoveRelatedComment();
-  }
 
 }

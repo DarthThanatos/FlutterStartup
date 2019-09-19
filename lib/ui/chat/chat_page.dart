@@ -8,6 +8,8 @@ import 'package:flutter_app/ui/chat/root_comment_button_section.dart';
 import 'package:flutter_app/widget/NestedList.dart';
 import 'package:inject/inject.dart';
 
+import 'progress_bar.dart';
+import 'chat_scroll_navigator.dart';
 import 'image_grid_section.dart';
 import 'comment_item.dart';
 import 'contract.dart';
@@ -24,59 +26,58 @@ class ChatPage extends StatefulWidget {
 
 }
 
-class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommentListener, OnMessageReadyListener {
+class ChatPageState extends State<ChatPage> implements ChatView {
 
-  BuiltChat chat;
-  BuiltChatItem currentlyRespondingChatItem;
+  BuiltChat _chat;
+  ChatScrollNavigator _chatScrollNavigator;
+  ProgressBar _sendingMsgProgressBar;
   bool _cleanInput = false;
 
-  ScrollController _nestedController;
-  ScrollController _outerController;
 
   @override
   void initState() {
     super.initState();
-    _outerController = ScrollController();
-    _nestedController = ScrollController();
+    _sendingMsgProgressBar = ProgressBar();
+    _chatScrollNavigator = ChatScrollNavigator();
+    _chatScrollNavigator.initState();
     widget.presenter.attachView(this);
     widget.presenter.downloadChat(666);
   }
 
   @override
   void dispose() {
-    _outerController.dispose();
-    _nestedController.dispose();
+    _sendingMsgProgressBar.hide();
+    _chatScrollNavigator.dispose();
     widget.presenter.detachView();
     super.dispose();
   }
 
   // to prevent invoking build() on tapping the text field
   // https://github.com/flutter/flutter/issues/36271
-  // Also, at start we do not respond to anyone, so responding chat item is null (not-passed)
   var _bottomSheetWidget;
 
   Widget _upToDateBottomSheet(){
     if(_bottomSheetWidget == null){
-      _bottomSheetWidget = BottomSheetWidget(respondToCommentListener: this, onMessageReadyListener: this);
+      _bottomSheetWidget = _newBottomSheet();
     }
     else {
       _bottomSheetWidget =
-        currentlyRespondingChatItem == _bottomSheetWidget.currentlyRespondingChatItem && !_cleanInput
-            ? _bottomSheetWidget
-            : BottomSheetWidget(
-              currentlyRespondingChatItem: currentlyRespondingChatItem,
-              respondToCommentListener: this,
-              onMessageReadyListener: this
-            );
-      _cleanInput = false;
+            !_cleanInput ? _bottomSheetWidget
+            : _newBottomSheet();
     }
+    _cleanInput = false;
     return _bottomSheetWidget;
   }
+
+  Widget _newBottomSheet() =>
+      BottomSheetWidget(
+          chatPresenter: widget.presenter
+      );
 
   @override
   Widget build(BuildContext context) {
     return
-      chat == null
+      _chat == null
           ? _LoadingMessage()
           : Scaffold(
             appBar: _appBar(),
@@ -84,46 +85,39 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
               _upToDateBottomSheet(),
             body:
                 ListView(
-                  controller: _outerController,
+                  controller: _chatScrollNavigator.outerController(),
                   children:
                     _rootQuestionSection()
                       ..add(SizedBox(height: 10))
                       ..add(_commentsSummary())
-                      ..add(SizedBox(height: 10))
+                      ..add(Divider())
                       ..add(_nestedCommentListView())
                 ),
           );
   }
 
   Widget _nestedCommentListView() {
-    final flattenedComments = chat.comments;
-
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _scrollToBottom());
-
+    final items = _chat.comments;
+    _chatScrollNavigator.triggerNestedScrollBottom();
     return Container(
         height: 400,
         child:
         NestedList(
             body:
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 8.0),
               child:
                 ListView.builder(
-                  controller: _nestedController,
-                  itemCount: flattenedComments.length + 2,
+                  controller: _chatScrollNavigator.nestedController(),
+                  itemCount: items.length + 2,
                   itemBuilder: (BuildContext context, int index) =>
-                      _commentSectionIndexToView(index, flattenedComments)
+                      _commentSectionIndexToView(index, items)
                 )
             )
         )
     );
   }
 
-  void _scrollToBottom() {
-    _nestedController.animateTo(_nestedController.position.maxScrollExtent,
-        duration: Duration(milliseconds: 500), curve: Curves.easeIn);
-  }
 
   Widget _commentSectionIndexToView(int index, BuiltList<BuiltChatItem> items){
     if(index < items.length)
@@ -135,13 +129,11 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
 
   Widget _commentItemPageInstance(int index, BuiltList<BuiltChatItem> items){
     final item = items[index];
-    final relatedComment = widget.presenter.getRelatedOrNull(item);
     return
       Builder(builder: (BuildContext context) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => _logCommentViewHeight(context, index));
-        return CommentItemPage(chatItem: item, respondListener: this, relatedComment: relatedComment);
+        _chatScrollNavigator.triggerLogCommentViewHeight(context, index);
+        return CommentItemPage(chatItem: item, chatPresenter: widget.presenter);
       });
-
   }
 
   Widget _moreCommentsButton() =>
@@ -154,30 +146,7 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
         ),
       ],
     );
-
-  Map<int, double> _commentViewsHeights = Map();
-
-  void _logCommentViewHeight(BuildContext context, int index){
-    _commentViewsHeights[index] = (context.findRenderObject() as RenderBox).size.height;
-  }
-
-  double _heightOfCommentViewsToIndex(int index){
-    double sum = 0;
-    for (var i = 0; i < index; i++){
-      sum += _commentViewsHeights[i];
-    }
-    return sum;
-  }
-
-  @override
-  void onGoToComment(BuiltChatItem chatItem) {
-    int index = widget.presenter.idToIndex(chatItem.chatItemId);
-    if(index == null) return;
-    double y = _heightOfCommentViewsToIndex(index);
-    _nestedController.animateTo(y, duration: Duration(milliseconds: 500), curve: Curves.easeIn);
-  }
-
-
+  
   Widget _commentsSummary() =>
     Row(
       mainAxisAlignment: MainAxisAlignment.start,
@@ -194,7 +163,7 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
 
   Widget _commentsAmount() =>
     Text(
-      "${chat.commentsAmount} komentarz(y)",
+      "${_chat.commentsAmount} komentarz(y)",
       style: TextStyle(color: Colors.black, fontSize: 15),
     );
 
@@ -210,7 +179,7 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
               child: Row(
                 children: <Widget>[
                   Text(
-                    chat.title,
+                    _chat.title,
                     style: TextStyle(color: Colors.white, fontSize: 15),
                   ),
                 ],
@@ -235,13 +204,12 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
       _chatRootHeader(),
       _rootComment(),
       _imgsGrid(),
-      RootCommentButtonSection()
+      RootCommentButtonSection(rootItem: _chat.chatRoot, chatPresenter: widget.presenter)
     ];
 
-  Widget _imgsGrid(){
-    final Set<String> photosPaths = chat.chatRoot.fileInfos.map((fileInfo) => fileInfo.url).toSet();
-    return ImageGridSection(photosPaths: photosPaths);
-  }
+  Widget _imgsGrid() =>
+      ImageGridSection(inputMode: false, chatPresenter: widget.presenter, chatItem: _chat.chatRoot);
+
 
   Widget _chatRootHeader() =>
     Container(
@@ -250,7 +218,7 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
       child: Row(
         children: <Widget>[
           SizedBox(width: 10),
-          _authorImg(chat.chatRoot.user.avatarUrl),
+          _authorImg(_chat.chatRoot.user.avatarUrl),
           SizedBox(width: 10),
           _authorName(),
           _expandedDiscussionCreationTime(),
@@ -265,7 +233,7 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
       child: Container(
         alignment: Alignment.centerRight,
         child: Text(
-          chat.chatRoot.creationTime,
+          _chat.chatRoot.creationTime,
           style: TextStyle(fontSize: 16)
         ),
       ),
@@ -273,7 +241,7 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
 
   Widget _authorName() =>
     Text(
-      chat.chatRoot.user.userName,
+      _chat.chatRoot.user.userName,
       style: TextStyle(fontSize: 16)
     );
 
@@ -295,47 +263,51 @@ class ChatPageState extends State<ChatPage> implements ChatView, RespondToCommen
        padding: const EdgeInsets.all(12.0),
        child:
         Text(
-           chat.chatRoot.text,
+           _chat.chatRoot.text,
            style: TextStyle(
              fontSize: 22
            )
          ),
      );
 
-  @override
-  void displayAllChats(BuiltList<BuiltChat> chats) {
-    // TODO: implement displayAllChats
-  }
 
   @override
   void displayChat(BuiltChat chat) {
     setState(
         (){
-          this.chat = chat;
-          currentlyRespondingChatItem = null;
+          this._chat = chat;
           _cleanInput = true;
         }
     );
   }
 
-  @override
-  void onRespondToComment(BuiltChatItem comment) {
+  void _refresh() {
     setState(() {
-      this.currentlyRespondingChatItem = comment;
+      _cleanInput = true;
     });
   }
 
   @override
-  void onRemoveRelatedComment() {
-    setState(() {
-      currentlyRespondingChatItem = null;
-    });
+  void onGotoComment(int index){
+    _chatScrollNavigator.goToComment(index);
   }
 
   @override
-  void onMessageReady(String text, int parentComment, Set<String> paths) {
-    widget.presenter.sendMessage(paths, text, parentComment);
+  void onImagesChanged() => _refresh();
+
+  @override
+  void onRelatedCommentChanged() => _refresh();
+
+  @override
+  void showSendingProgressBar() {
+    _sendingMsgProgressBar.show(context);
   }
+
+  @override
+  void hideSendingProgressBar() {
+    _sendingMsgProgressBar.hide();
+  }
+
 }
 
 class _Centered extends StatelessWidget {
@@ -375,15 +347,11 @@ class _LoadingMessage extends StatelessWidget {
 
 class BottomSheetWidget extends StatelessWidget{
 
-  final BuiltChatItem currentlyRespondingChatItem;
-  final RespondToCommentListener respondToCommentListener;
-  final OnMessageReadyListener onMessageReadyListener;
+  final ChatPresenter chatPresenter;
 
   BottomSheetWidget({
     Key key,
-    this.currentlyRespondingChatItem,
-    @required this.respondToCommentListener,
-    @required this.onMessageReadyListener
+    @required this.chatPresenter
   });
 
   @override
@@ -395,9 +363,7 @@ class BottomSheetWidget extends StatelessWidget{
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           CommentInput(
-              maybeRelatedComment: currentlyRespondingChatItem,
-              respondToCommentListener: respondToCommentListener,
-              onMessageReadyListener: onMessageReadyListener
+              chatPresenter: chatPresenter
           ),
         ],
       ),

@@ -15,8 +15,8 @@ class ImageViewer extends StatelessWidget{
             color: Colors.transparent,
             child:
               Container(
-                width: SizeUtils.screenWidth(context),
-                height: SizeUtils.screenHeight(context),
+                width: screenWidth(context),
+                height: screenHeight(context),
                 child:
 
                 Column(

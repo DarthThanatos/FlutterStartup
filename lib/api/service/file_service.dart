@@ -14,7 +14,7 @@ abstract class FileService extends ChopperService{
   Future<Response<BuiltFileInfo>> postFile(@PartFile("file") String filePath);
 
   @Post(path: "/new/url")
-  Future<Response<BuiltFileInfo>> postFileUrl(String url);
+  Future<Response<BuiltFileInfo>> postFileUrl(@Body() String url);
 
   @Get(path: "/{filename}")
   Future<Response<Uint8List>> getFile(@Path("filename") String fileName); // the response will contain the char array of the file body

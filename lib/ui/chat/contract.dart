@@ -1,19 +1,39 @@
 import 'package:flutter_app/api/model/built_chat.dart';
-import 'package:built_collection/built_collection.dart';
 import 'package:flutter_app/api/model/built_chat_item.dart';
 
 abstract class ChatView {
-  void displayAllChats(BuiltList<BuiltChat> chats);
+
   void displayChat(BuiltChat chat);
+  void onImagesChanged();
+  void onRelatedCommentChanged();
+  void onGotoComment(int index);
+  void showSendingProgressBar();
+  void hideSendingProgressBar();
+
 }
 
 abstract class ChatPresenter {
+
   void attachView(ChatView view);
   void detachView();
-  void downloadAllChats();
-  void downloadChat(int chatId);
-  BuiltChatItem getRelatedOrNull(BuiltChatItem commentItem);
-  int idToIndex(int id);
-  void sendMessage(Set<String> filePaths, String text, int parentComment);
 
+  void downloadChat(int chatId);
+  void sendMessage();
+
+  void addImage(String path);
+  void removeImage(String path);
+  Set<String> getImages();
+
+  void setInputRelatedComment(BuiltChatItem chatItem);
+  BuiltChatItem getInputRelatedComment();
+  BuiltChatItem getRelatedOf(BuiltChatItem commentItem);
+
+  void setMessageText(String text);
+  String getMessageText();
+
+  void likeComment(BuiltChatItem item);
+  void reportComment(BuiltChatItem item);
+
+  void goToComment(BuiltChatItem comment);
+  Set<String> fileInfosToPathsOf(BuiltChatItem chatItem);
 }

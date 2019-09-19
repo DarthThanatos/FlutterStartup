@@ -1,7 +1,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/api/model/built_chat_item.dart';
+import 'package:share/share.dart';
+
+import 'contract.dart';
 
 class RootCommentButtonSection extends StatelessWidget {
+
+  final BuiltChatItem rootItem;
+  final ChatPresenter chatPresenter;
+
+  RootCommentButtonSection({@required this.rootItem, @required this.chatPresenter});
 
   @override
   Widget build(BuildContext context) =>
@@ -10,13 +19,13 @@ class RootCommentButtonSection extends StatelessWidget {
           SizedBox(width: 16),
           _saveButton(),
           _shareButton(),
-          _notifyButton()
+          _reportButton()
         ],
       );
 
 
   Widget _saveButton() =>
-      _iconTxtButton(Icons.favorite, "Zapisz", _onSave);
+      _iconTxtButton(Icons.favorite, "Obserwuj", _onSave);
 
   void _onSave(){
     print("Save clicked");
@@ -26,25 +35,23 @@ class RootCommentButtonSection extends StatelessWidget {
       _iconTxtButton(Icons.share, "Udostępnij", _onShare);
 
   void _onShare(){
-    print("Share clicked");
+    Share.share('https://example.com', subject: "Wyprawka");
   }
 
-  Widget _notifyButton() =>
-      _iconTxtButton(Icons.assistant_photo, "Zgłoś", _onNotify);
+  Widget _reportButton() =>
+      rootItem.reportedByMe
+          ? _iconTxtButton(Icons.assistant_photo, "Zgłoszono", (){}, color: Colors.blue)
+          : _iconTxtButton(Icons.assistant_photo, "Zgłoś", () => chatPresenter.reportComment(rootItem));
 
-  void _onNotify(){
-    print("Notify clicked");
-  }
-
-  Widget _iconTxtButton(IconData iconData, String text, void Function() onPressed) =>
+  Widget _iconTxtButton(IconData iconData, String text, void Function() onPressed, {Color color = Colors.grey}) =>
       FlatButton(
         onPressed: onPressed,
         color: Color(0x0F000000),
         padding: EdgeInsets.all(10.0),
         child: Column( // Replace with a Row for horizontal icon + text
           children: <Widget>[
-            Icon(iconData),
-            Text(text)
+            Icon(iconData, color: color),
+            Text(text, style: TextStyle(color: color))
           ],
         ),
       );

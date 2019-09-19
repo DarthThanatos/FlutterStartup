@@ -15,6 +15,12 @@ abstract class ChatService extends ChopperService {
     @Post()
     Future<Response<BuiltChatItem>> postChatItem(@Body() BuiltChatItem item);
 
+    @Post(path: "/like")
+    Future<Response<BuiltChatItem>> likeComment(@Body() BuiltChatItem item);
+
+    @Post(path: "/report")
+    Future<Response<BuiltChatItem>> reportComment(@Body() BuiltChatItem item);
+
     @Get()
     Future<Response<BuiltList<BuiltChat>>> getAllChats();
 

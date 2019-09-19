@@ -9,11 +9,11 @@ import 'package:inject/inject.dart';
 @module
 class PresentersModule{
 
-  @provide
+  @provide @singleton
   ChatPresenter chatPresenter(ChatService chatService, FileService fileService)
     => ChatPresenterImpl(chatService, fileService);
 
-  @provide
+  @provide @singleton
   FileViewerPresenter fileViewerPresenter(ChatService chatService)
     => FileViewerPresenterImpl(chatService);
 
