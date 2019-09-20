@@ -86,15 +86,12 @@ class ChatPresenterImpl implements ChatPresenter{
           builder.likedByMe = false;
           builder.reportedByMe = false;
           builder.creationTime = DateTime.now().toString();
-          print("infos: $infos");
           builder.fileInfos = ListBuilder()..addAll(infos);
           return builder.build();
         }
     );
-    print("Sending item: $item");
     chatService.postChatItem(item).then(
         (res){
-          print("Got response: ${res.body}");
           _cleanInput();
           _view.hideSendingProgressBar();
           downloadChat(_chat.chatId);
@@ -154,7 +151,7 @@ class ChatPresenterImpl implements ChatPresenter{
     return null;
   }
 
-  void _replaceChatItem(BuiltChatItem modifiedItem){
+  void _replaceCommentListItem(BuiltChatItem modifiedItem){
     int index = _idToIndex(modifiedItem.chatItemId);
     _chat = _chat.rebuild((BuiltChatBuilder chatBuilder){
       final listBuilder = _chat.comments.toBuilder();
@@ -162,7 +159,20 @@ class ChatPresenterImpl implements ChatPresenter{
       chatBuilder.comments = listBuilder;
       return chatBuilder.build();
     });
+  }
 
+  void _replaceRootComment(BuiltChatItem modifiedItem){
+    _chat = _chat.rebuild((BuiltChatBuilder chatBuilder){
+      chatBuilder.chatRoot = modifiedItem.toBuilder();
+      return chatBuilder.build();
+    });
+  }
+
+  void _replaceChatItem(BuiltChatItem modifiedItem){
+    if(modifiedItem.chatItemId == _chat.chatRoot.chatItemId)
+      _replaceRootComment(modifiedItem);
+    else
+      _replaceCommentListItem(modifiedItem);
   }
 
   @override
